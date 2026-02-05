@@ -63,6 +63,7 @@ export default function FolderManager({ onStatsChange }) {
   const [newFolderName, setNewFolderName] = useState('');
   const [editingFolder, setEditingFolder] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [previewFile, setPreviewFile] = useState(null);
   
   // Upload
   const [uploadProgress, setUploadProgress] = useState({});
