@@ -88,7 +88,7 @@ class FolderResponse(BaseModel):
     file_count: int = 0
     subfolder_count: int = 0
 
-class FileResponse(BaseModel):
+class FileResponseModel(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str
     name: str
@@ -356,7 +356,7 @@ async def upload_file(
         preview_url=preview_url
     )
 
-@api_router.get("/files", response_model=List[FileResponse])
+@api_router.get("/files", response_model=List[FileResponseModel])
 async def get_files(folder_id: str, admin = Depends(get_current_admin)):
     files = await db.files.find({'folder_id': folder_id}, {'_id': 0}).to_list(1000)
     result = []
