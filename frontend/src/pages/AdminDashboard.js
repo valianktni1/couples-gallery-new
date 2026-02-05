@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
-  Camera, FolderOpen, Share2, LayoutDashboard, LogOut,
+  FolderOpen, Share2, LayoutDashboard, LogOut,
   ChevronRight, Plus, Upload, Settings, Users
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ import ShareManager from '@/components/admin/ShareManager';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+const LOGO_URL = "https://customer-assets.emergentagent.com/job_6e5757e7-0b45-46c5-8f03-c1858510b49f/artifacts/fq31etoy_cropped-new-logo-2022-black-with-bevel-1.png";
 
 export default function AdminDashboard() {
   const { user, logout, token } = useAuth();
@@ -63,15 +64,11 @@ export default function AdminDashboard() {
       <aside className="w-64 bg-[#1a1a1a] border-r border-[#2a2a2a] flex flex-col">
         {/* Logo */}
         <div className="p-6 border-b border-[#2a2a2a]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-[#ad946d]/20 flex items-center justify-center">
-              <Camera className="w-5 h-5 text-[#ad946d]" />
-            </div>
-            <div>
-              <h1 className="logo-text text-lg text-white">Weddings By Mark</h1>
-              <p className="text-xs text-gray-500">Gallery Admin</p>
-            </div>
-          </div>
+          <img 
+            src={LOGO_URL} 
+            alt="Weddings By Mark" 
+            className="h-12 invert brightness-200"
+          />
         </div>
 
         {/* Navigation */}
