@@ -1,5 +1,9 @@
 version: '3.8'
 
+# Couples Gallery - Weddings By Mark
+# Production-ready Docker Compose for TrueNAS/Dockge
+# Max upload: 25GB | Storage: Persistent volumes
+
 services:
   # MongoDB Database
   mongodb:
@@ -16,7 +20,8 @@ services:
       test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
+      start_period: 30s
 
   # Backend API (FastAPI)
   backend:
@@ -26,15 +31,17 @@ services:
     container_name: couples-gallery-api
     restart: unless-stopped
     depends_on:
-      - mongodb
+      mongodb:
+        condition: service_healthy
     volumes:
-      - /mnt/apps/couplesgallerydata/app:/app/data
+      - /mnt/apps/couplesgallerydata/thumbnails:/app/data/thumbnails
+      - /mnt/apps/couplesgallerydata/previews:/app/data/previews
       - /mnt/nextcloud/couplesgalleryfiles:/app/files
     environment:
       - MONGO_URL=mongodb://mongodb:27017
       - DB_NAME=couples_gallery
       - CORS_ORIGINS=*
-      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-this}
+      - JWT_SECRET=${JWT_SECRET}
       - SHARE_DOMAIN=https://weddingsbymark.uk
       - DATA_DIR=/app/data
       - FILES_DIR=/app/files
@@ -44,7 +51,8 @@ services:
       test: curl -f http://localhost:8001/api/ || exit 1
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
+      start_period: 15s
 
   # Frontend (React)
   frontend:
@@ -56,27 +64,31 @@ services:
     container_name: couples-gallery-web
     restart: unless-stopped
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     networks:
       - gallery-network
     healthcheck:
       test: curl -f http://localhost:3000 || exit 1
       interval: 30s
       timeout: 10s
-      retries: 3
+      retries: 5
+      start_period: 30s
 
-  # Nginx Reverse Proxy (internal routing)
+  # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
     container_name: couples-gallery-nginx
     restart: unless-stopped
     depends_on:
-      - backend
-      - frontend
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
     ports:
       - "3029:80"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     networks:
       - gallery-network
     healthcheck:
@@ -88,6 +100,3 @@ services:
 networks:
   gallery-network:
     driver: bridge
-
-volumes:
-  mongodb_data:
