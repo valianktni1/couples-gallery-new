@@ -46,24 +46,6 @@ export const AuthProvider = ({ children }) => {
     return () => clearInterval(interval);
   }, [token, verifyToken]);
 
-  const verifyToken = async () => {
-    try {
-      const res = await fetch(`${API}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setUser(data);
-      } else {
-        logout();
-      }
-    } catch (e) {
-      logout();
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const login = async (username, password) => {
     const res = await fetch(`${API}/auth/login`, {
       method: 'POST',
@@ -96,7 +78,8 @@ export const AuthProvider = ({ children }) => {
       loading,
       isAuthenticated: !!token && !!user,
       login,
-      logout
+      logout,
+      refreshAuth: verifyToken
     }}>
       {children}
     </AuthContext.Provider>
