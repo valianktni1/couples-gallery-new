@@ -340,17 +340,17 @@ async def upload_file(
         'folder_id': folder_id,
         'stored_name': stored_name,
         'file_type': file_type,
-        'size': len(content),
+        'size': file_size,
         'created_at': datetime.now(timezone.utc).isoformat()
     }
     await db.files.insert_one(file_doc)
     
-    return FastAPIFileResponse(
+    return FileResponseModel(
         id=file_id,
         name=file.filename,
         folder_id=folder_id,
         file_type=file_type,
-        size=len(content),
+        size=file_size,
         created_at=file_doc['created_at'],
         thumbnail_url=thumbnail_url,
         preview_url=preview_url
@@ -366,7 +366,7 @@ async def get_files(folder_id: str, admin = Depends(get_current_admin)):
         if f['file_type'] == 'image':
             thumbnail_url = f"/api/files/{f['id']}/thumbnail"
             preview_url = f"/api/files/{f['id']}/preview"
-        result.append(FileResponse(
+        result.append(FileResponseModel(
             id=f['id'],
             name=f['name'],
             folder_id=f['folder_id'],
