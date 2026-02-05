@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: couples-gallery-db
+    restart: unless-stopped
+    volumes:
+      - /mnt/apps/couplesgallerydata/mongodb:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=couples_gallery
+    networks:
+      - gallery-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backend API (FastAPI)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: couples-gallery-api
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+    volumes:
+      - /mnt/apps/couplesgallerydata/app:/app/data
+      - /mnt/nextcloud/couplesgalleryfiles:/app/files
+    environment:
+      - MONGO_URL=mongodb://mongodb:27017
+      - DB_NAME=couples_gallery
+      - CORS_ORIGINS=*
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-this}
+      - SHARE_DOMAIN=https://weddingsbymark.uk
+      - DATA_DIR=/app/data
+      - FILES_DIR=/app/files
+    networks:
+      - gallery-network
+    healthcheck:
+      test: curl -f http://localhost:8001/api/ || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend (React)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - REACT_APP_BACKEND_URL=https://weddingsbymark.uk
+    container_name: couples-gallery-web
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - gallery-network
+    healthcheck:
+      test: curl -f http://localhost:3000 || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx Reverse Proxy (internal routing)
+  nginx:
+    image: nginx:alpine
+    container_name: couples-gallery-nginx
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - frontend
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - gallery-network
+    healthcheck:
+      test: nginx -t || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  gallery-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
