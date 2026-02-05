@@ -311,7 +311,7 @@ async def upload_file(
     
     # Determine file type
     image_exts = {'.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.heif'}
-    video_exts = {'.mp4', '.mov', '.avi', '.mkv', '.webm'}
+    video_exts = {'.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v'}
     
     if ext in image_exts:
         file_type = 'image'
@@ -320,10 +320,13 @@ async def upload_file(
     else:
         file_type = 'other'
     
-    # Save file
+    # Stream file to disk in chunks (memory efficient for large files)
+    file_size = 0
+    chunk_size = 1024 * 1024  # 1MB chunks
     async with aiofiles.open(file_path, 'wb') as f:
-        content = await file.read()
-        await f.write(content)
+        while chunk := await file.read(chunk_size):
+            await f.write(chunk)
+            file_size += len(chunk)
     
     # Generate thumbnails for images
     thumbnail_url = None
