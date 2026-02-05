@@ -627,6 +627,47 @@ export default function FolderManager({ onStatsChange }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Image Preview Modal */}
+      <AnimatePresence>
+        {previewFile && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
+            onClick={() => setPreviewFile(null)}
+          >
+            <div className="relative max-w-[90vw] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+              <img
+                src={`${BACKEND_URL}${previewFile.preview_url || previewFile.thumbnail_url}`}
+                alt={previewFile.name}
+                className="max-w-full max-h-[85vh] object-contain rounded"
+              />
+              <div className="absolute top-4 right-4 flex gap-2">
+                <a
+                  href={`${BACKEND_URL}/api/files/${previewFile.id}/download`}
+                  download
+                  className="bg-[#ad946d] hover:bg-[#9a8460] text-white p-3 rounded-full"
+                  data-testid="preview-download-btn"
+                >
+                  <Download className="w-5 h-5" />
+                </a>
+                <button
+                  onClick={() => setPreviewFile(null)}
+                  className="bg-white/20 hover:bg-white/30 text-white p-3 rounded-full backdrop-blur-sm"
+                  data-testid="preview-close-btn"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-full text-sm backdrop-blur-sm">
+                {previewFile.name}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
