@@ -403,7 +403,26 @@ export default function FolderManager({ onStatsChange }) {
       {/* Files Grid */}
       {files.length > 0 && (
         <section>
-          <h2 className="text-sm font-medium text-gray-400 mb-4">Files ({files.length})</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-medium text-gray-400">Files ({files.length})</h2>
+            {files.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  // Download all files by opening each in new tab
+                  files.forEach(file => {
+                    window.open(`${BACKEND_URL}/api/files/${file.id}/download`, '_blank');
+                  });
+                }}
+                className="border-[#333] text-gray-300 hover:bg-[#252525] text-xs"
+                data-testid="download-all-btn"
+              >
+                <Download className="w-3 h-3 mr-1" />
+                Download All
+              </Button>
+            )}
+          </div>
           <div className="file-grid">
             <AnimatePresence>
               {files.map((file, index) => (
@@ -417,24 +436,40 @@ export default function FolderManager({ onStatsChange }) {
                   data-testid={`file-${file.id}`}
                 >
                   {file.file_type === 'image' ? (
-                    <div className="aspect-square bg-[#252525] relative">
+                    <div 
+                      className="aspect-square bg-[#252525] relative cursor-pointer"
+                      onClick={() => setPreviewFile(file)}
+                    >
                       <img
                         src={`${BACKEND_URL}${file.thumbnail_url}`}
                         alt={file.name}
                         className="w-full h-full object-cover"
                         loading="lazy"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.parentElement.classList.add('flex', 'items-center', 'justify-center');
+                          e.target.parentElement.innerHTML = '<span class="text-gray-500">Loading...</span>';
+                        }}
                       />
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setPreviewFile(file); }}
+                          className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full backdrop-blur-sm"
+                          data-testid={`preview-${file.id}`}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
                         <a
                           href={`${BACKEND_URL}/api/files/${file.id}/download`}
                           download
-                          className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full backdrop-blur-sm"
+                          onClick={(e) => e.stopPropagation()}
+                          className="bg-[#ad946d]/80 hover:bg-[#ad946d] text-white p-2 rounded-full backdrop-blur-sm"
                           data-testid={`download-${file.id}`}
                         >
-                          <FileIcon className="w-4 h-4" />
+                          <Download className="w-4 h-4" />
                         </a>
                         <button
-                          onClick={() => setDeleteTarget({ id: file.id, name: file.name, type: 'file' })}
+                          onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: file.id, name: file.name, type: 'file' }); }}
                           className="bg-red-500/50 hover:bg-red-500/70 text-white p-2 rounded-full backdrop-blur-sm"
                           data-testid={`delete-file-${file.id}`}
                         >
