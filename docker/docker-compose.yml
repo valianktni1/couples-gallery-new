@@ -74,7 +74,7 @@ services:
       - backend
       - frontend
     ports:
-      - "8080:80"
+      - "3029:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     networks:
