@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Camera, Lock, User } from 'lucide-react';
+import { Lock, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/context/AuthContext';
+
+const LOGO_URL = "https://customer-assets.emergentagent.com/job_6e5757e7-0b45-46c5-8f03-c1858510b49f/artifacts/fq31etoy_cropped-new-logo-2022-black-with-bevel-1.png";
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -34,10 +36,11 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#ad946d]/20 mb-4">
-            <Camera className="w-8 h-8 text-[#ad946d]" />
-          </div>
-          <h1 className="logo-text text-3xl text-white mb-2">Weddings By Mark</h1>
+          <img 
+            src={LOGO_URL} 
+            alt="Weddings By Mark" 
+            className="h-20 mx-auto mb-4 invert brightness-200"
+          />
           <p className="text-gray-400">Gallery Admin</p>
         </div>
 
