@@ -1,0 +1,159 @@
+{
+  "identity": {
+    "name": "E1",
+    "role": "Creative Designer",
+    "principles": [
+      "Fusion over Imitation",
+      "Emotion First",
+      "Content is king",
+      "Zoom in",
+      "Negative Space",
+      "Contrast"
+    ]
+  },
+  "project": {
+    "name": "Weddings By Mark - Gallery App",
+    "description": "Self-hosted couples gallery sharing app with a dual-personality design: High-efficiency Dark Mode Admin vs. High-emotion Light Mode Client Gallery.",
+    "target_audience": [
+      "Mark (Admin): Needs speed, clarity, and dark mode for editing environments.",
+      "Couples (Users): Need romance, elegance, and ease of use on mobile."
+    ]
+  },
+  "theme_strategy": {
+    "mode": "Dual Theme",
+    "implementation": "Route-based theming. Admin routes (/admin) force 'dark' class. Gallery routes (/gallery, /shared) force 'light' mode.",
+    "admin_theme": {
+      "base": "Dark Mode",
+      "background": "#121212",
+      "surface": "#1E1E1E",
+      "primary": "#ad946d",
+      "text_primary": "#EDEDED",
+      "text_secondary": "#A1A1AA"
+    },
+    "gallery_theme": {
+      "base": "Light Mode",
+      "background": "#FAFAFA",
+      "surface": "#FFFFFF",
+      "primary": "#ad946d",
+      "text_primary": "#1A1A1A",
+      "text_secondary": "#52525B"
+    }
+  },
+  "typography": {
+    "font_family": {
+      "headings_gallery": "Playfair Display, serif",
+      "headings_admin": "Manrope, sans-serif",
+      "body": "Manrope, sans-serif",
+      "mono": "JetBrains Mono, monospace"
+    },
+    "usage": {
+      "gallery_hero": "text-5xl md:text-7xl font-serif tracking-tight italic",
+      "gallery_section": "text-3xl md:text-4xl font-serif tracking-wide",
+      "admin_header": "text-2xl font-sans font-semibold tracking-tight",
+      "body_text": "text-base font-sans leading-relaxed text-muted-foreground"
+    },
+    "installation": "Import 'Playfair Display' and 'Manrope' from Google Fonts in index.css"
+  },
+  "colors": {
+    "palette": {
+      "gold": {
+        "DEFAULT": "#ad946d",
+        "light": "#E9D19D",
+        "dark": "#8C7350"
+      },
+      "champagne": "#E9D19D",
+      "rich_black": "#121212",
+      "off_white": "#FAFAFA",
+      "error": "#EF4444",
+      "success": "#10B981"
+    },
+    "tailwind_config": {
+      "primary": "var(--primary)",
+      "secondary": "var(--secondary)",
+      "accent": "var(--accent)",
+      "background": "var(--background)",
+      "foreground": "var(--foreground)"
+    }
+  },
+  "layout_strategies": {
+    "admin": {
+      "structure": "Sidebar Navigation + Top Bar + Content Area",
+      "grid": "Mode B (High Density)",
+      "spacing": "Compact (p-4, gap-4)",
+      "container": "max-w-full px-6"
+    },
+    "gallery": {
+      "structure": "Full-width Hero + Masonry Grid + Lightbox",
+      "grid": "Mode A (Tetris/Masonry)",
+      "spacing": "Luxurious (p-8, gap-8, py-20)",
+      "container": "max-w-7xl mx-auto px-4 md:px-8"
+    }
+  },
+  "components": {
+    "admin_ui": {
+      "library": "shadcn/ui",
+      "style": "Sharp edges (rounded-sm or rounded-md), dense spacing, dark backgrounds.",
+      "specifics": {
+        "card": "bg-card border-border/10 shadow-sm hover:border-primary/20 transition-colors",
+        "button": "rounded-sm font-medium tracking-wide",
+        "input": "bg-secondary/50 border-transparent focus:border-primary"
+      }
+    },
+    "gallery_ui": {
+      "library": "Custom + Headless UI",
+      "style": "Soft shadows, elegant typography, generous whitespace.",
+      "specifics": {
+        "hero": "Full viewport height (min-h-[80vh]), parallax background, centered serif text.",
+        "grid_item": "group relative overflow-hidden rounded-sm aspect-[3/4] or aspect-[4/3]",
+        "lightbox": "Immersive overlay, black background (95% opacity), minimal controls."
+      }
+    }
+  },
+  "visual_enhancers": {
+    "textures": "Subtle noise overlay on Admin background to prevent banding and add depth.",
+    "shadows": "Soft, diffuse shadows for Gallery cards. Sharp, technical shadows for Admin dropdowns.",
+    "borders": "1px borders with low opacity (10-15%) for structure.",
+    "glassmorphism": "Used in Admin Sidebar and Gallery Sticky Header (backdrop-blur-xl)."
+  },
+  "motion": {
+    "admin": "Fast (150ms), snappy, functional. Hover lifts, active states.",
+    "gallery": "Slow (500ms+), graceful, emotional. Staggered fade-ins for images, parallax scrolling.",
+    "libraries": "framer-motion (for layout transitions and gallery entrance)"
+  },
+  "image_urls": {
+    "hero_backgrounds": [
+      "https://images.unsplash.com/photo-1768900043207-cd0436cad6ee?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "https://images.unsplash.com/photo-1765292783735-9ec7213b1df1?crop=entropy&cs=srgb&fm=jpg&q=85"
+    ],
+    "placeholders": {
+      "couples": [
+        "https://images.unsplash.com/photo-1768900044120-650653953a6a?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "https://images.unsplash.com/photo-1765292783362-91affd475cb7?crop=entropy&cs=srgb&fm=jpg&q=85"
+      ],
+      "details": [
+        "https://images.unsplash.com/photo-1559936253-002c8860a307?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "https://images.unsplash.com/photo-1632660055730-1f1941088b91?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "https://images.unsplash.com/photo-1743507295628-1898497b0123?crop=entropy&cs=srgb&fm=jpg&q=85"
+      ]
+    }
+  },
+  "instructions_to_main_agent": [
+    "1. SETUP: Install 'framer-motion', 'lucide-react', 'clsx', 'tailwind-merge' if not present.",
+    "2. FONTS: Add Google Fonts import for Playfair Display and Manrope to index.css immediately.",
+    "3. THEME: Configure tailwind.config.js to use the Gold/Champagne palette and ensure 'class' based dark mode is active.",
+    "4. ROUTING: Create a layout wrapper that applies the 'dark' class to the Admin section and removes it for the Gallery section.",
+    "5. ADMIN: Build the Admin Dashboard first. Focus on the Folder/File Manager logic. Use Shadcn Table and Dialog components.",
+    "6. GALLERY: Build the Public Gallery second. Focus on the Masonry Grid and Lightbox. Use custom CSS/Tailwind for the grid.",
+    "7. MOCK DATA: Use the provided image URLs to populate the initial state so the app looks 'lived in' immediately.",
+    "8. TESTING: Add data-testid to all interactive elements (buttons, inputs, grid items)."
+  ],
+  "universal_guidelines": [
+    "Avoid 'AI Slop': Do not use generic centered layouts or default blue colors.",
+    "Dark colors must be solid or subtle noise, NO dark gradients.",
+    "Use glassmorphism (backdrop-blur) for overlays and sticky headers.",
+    "Micro-animations are mandatory for all interactions.",
+    "Spacing: Use 2x more padding than you think is necessary.",
+    "Never use AI emojis (robot, brain, etc.) as icons.",
+    "Use 'sonner' for toast notifications."
+  ]
+}
