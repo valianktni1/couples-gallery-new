@@ -111,9 +111,11 @@ export default function GalleryPage() {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center gallery-theme">
         <div className="text-center">
-          <div className="w-12 h-12 rounded-full bg-[#ad946d]/20 flex items-center justify-center mx-auto mb-4 animate-pulse">
-            <Camera className="w-6 h-6 text-[#ad946d]" />
-          </div>
+          <img 
+            src={LOGO_URL} 
+            alt="Weddings By Mark" 
+            className="h-16 mx-auto mb-4 animate-pulse"
+          />
           <p className="text-gray-500">Loading gallery...</p>
         </div>
       </div>
