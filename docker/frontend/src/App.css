@@ -1,0 +1,177 @@
+/* App-specific styles */
+
+/* Logo text styling */
+.logo-text {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-style: italic;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+}
+
+/* Admin sidebar */
+.admin-sidebar {
+    background: hsl(var(--card));
+    border-right: 1px solid hsl(var(--border));
+}
+
+/* File grid */
+.file-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+/* Gallery masonry grid */
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .gallery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    }
+}
+
+/* Image hover effects */
+.image-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.25rem;
+    aspect-ratio: 4/3;
+    background: hsl(var(--muted));
+}
+
+.image-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.image-card:hover img {
+    transform: scale(1.05);
+}
+
+.image-card .overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.image-card:hover .overlay {
+    opacity: 1;
+}
+
+/* Lightbox */
+.lightbox-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lightbox-content {
+    max-width: 90vw;
+    max-height: 90vh;
+}
+
+.lightbox-content img {
+    max-width: 100%;
+    max-height: 90vh;
+    object-fit: contain;
+}
+
+/* Dropzone */
+.dropzone {
+    border: 2px dashed hsl(var(--border));
+    border-radius: 0.5rem;
+    padding: 3rem;
+    text-align: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.dropzone:hover,
+.dropzone.active {
+    border-color: hsl(var(--primary));
+    background: hsl(var(--primary) / 0.05);
+}
+
+/* QR Code container */
+.qr-container {
+    background: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    display: inline-block;
+}
+
+/* Video player */
+.video-player {
+    width: 100%;
+    max-height: 80vh;
+    background: black;
+    border-radius: 0.25rem;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: hsl(var(--muted-foreground));
+}
+
+.breadcrumb a {
+    color: hsl(var(--muted-foreground));
+    transition: color 0.2s;
+}
+
+.breadcrumb a:hover {
+    color: hsl(var(--foreground));
+}
+
+/* Permission badges */
+.badge-read {
+    background: hsl(217 91% 60%);
+    color: white;
+}
+
+.badge-edit {
+    background: hsl(142 71% 45%);
+    color: white;
+}
+
+.badge-full {
+    background: hsl(var(--primary));
+    color: white;
+}
+
+/* Loading skeleton */
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        hsl(var(--muted)) 0%,
+        hsl(var(--muted-foreground) / 0.1) 50%,
+        hsl(var(--muted)) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Toast customization */
+[data-sonner-toaster] {
+    font-family: 'Manrope', sans-serif;
+}
