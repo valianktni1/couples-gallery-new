@@ -66,10 +66,14 @@ Add a new Proxy Host:
 | Domain | weddingsbymark.uk |
 | Scheme | http |
 | Forward Hostname | couples-gallery-nginx |
-| Forward Port | 80 |
+| Forward Port | 3029 |
 | SSL | Request new Let's Encrypt certificate |
 | Force SSL | Yes |
 | HTTP/2 | Yes |
+
+**Or if using IP address:**
+| Forward Hostname | YOUR_TRUENAS_IP |
+| Forward Port | 3029 |
 
 ### 5. First-Time Setup
 
