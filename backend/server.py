@@ -221,6 +221,9 @@ async def create_folder(folder: FolderCreate, admin = Depends(get_current_admin)
 
 @api_router.get("/folders", response_model=List[FolderResponse])
 async def get_folders(parent_id: Optional[str] = None, admin = Depends(get_current_admin)):
+    # Handle empty string as null for root folders
+    if parent_id == '' or parent_id == 'null':
+        parent_id = None
     query = {'parent_id': parent_id}
     folders = await db.folders.find(query, {'_id': 0}).to_list(1000)
     
