@@ -4,8 +4,8 @@ import { useDropzone } from 'react-dropzone';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  FolderOpen, FolderPlus, ChevronRight, Upload, Trash2,
-  Image, Film, MoreVertical, Edit2, ArrowLeft, X, Check,
+  FolderOpen, FolderPlus, ChevronRight, Upload, Trash2, Download,
+  Image, Film, MoreVertical, Edit2, ArrowLeft, X, Check, Eye,
   File as FileIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
