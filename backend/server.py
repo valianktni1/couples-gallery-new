@@ -345,7 +345,7 @@ async def upload_file(
     }
     await db.files.insert_one(file_doc)
     
-    return FileResponse(
+    return FastAPIFileResponse(
         id=file_id,
         name=file.filename,
         folder_id=folder_id,
@@ -383,14 +383,14 @@ async def get_thumbnail(file_id: str):
     thumb_path = THUMBNAILS_DIR / f"{file_id}.jpg"
     if not thumb_path.exists():
         raise HTTPException(status_code=404, detail="Thumbnail not found")
-    return FileResponse(thumb_path, media_type="image/jpeg")
+    return FastAPIFileResponse(thumb_path, media_type="image/jpeg")
 
 @api_router.get("/files/{file_id}/preview")
 async def get_preview(file_id: str):
     preview_path = PREVIEWS_DIR / f"{file_id}.jpg"
     if not preview_path.exists():
         raise HTTPException(status_code=404, detail="Preview not found")
-    return FileResponse(preview_path, media_type="image/jpeg")
+    return FastAPIFileResponse(preview_path, media_type="image/jpeg")
 
 @api_router.get("/files/{file_id}/download")
 async def download_file(file_id: str):
@@ -400,7 +400,7 @@ async def download_file(file_id: str):
     file_path = FILES_DIR / file_doc['stored_name']
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="File not found")
-    return FileResponse(file_path, filename=file_doc['name'])
+    return FastAPIFileResponse(file_path, filename=file_doc['name'])
 
 @api_router.get("/files/{file_id}/stream")
 async def stream_file(file_id: str):
@@ -420,7 +420,7 @@ async def stream_file(file_id: str):
         '.mkv': 'video/x-matroska'
     }
     media_type = media_types.get(ext, 'application/octet-stream')
-    return FileResponse(file_path, media_type=media_type)
+    return FastAPIFileResponse(file_path, media_type=media_type)
 
 @api_router.delete("/files/{file_id}")
 async def delete_file(file_id: str, admin = Depends(get_current_admin)):
