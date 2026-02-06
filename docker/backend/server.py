@@ -738,6 +738,55 @@ async def get_gallery_path(token: str, folder_id: str):
     
     return path
 
+# ==================== PUBLIC ZIP DOWNLOAD ====================
+
+@api_router.get("/gallery/{token}/download-zip")
+async def download_gallery_zip(token: str, folder_id: Optional[str] = None):
+    """Download all files in gallery folder as ZIP (for clients)"""
+    import zipfile
+    import tempfile
+    
+    share = await db.shares.find_one({'token': token}, {'_id': 0})
+    if not share:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    # Use share's root folder if no folder_id specified
+    target_folder_id = folder_id if folder_id else share['folder_id']
+    
+    # Verify folder is within share hierarchy
+    if folder_id and not await is_folder_in_share(folder_id, share['folder_id']):
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    files = await db.files.find({'folder_id': target_folder_id}, {'_id': 0}).to_list(10000)
+    if not files:
+        raise HTTPException(status_code=404, detail="No files in folder")
+    
+    # Get folder name for zip filename
+    folder = await db.folders.find_one({'id': target_folder_id}, {'_id': 0})
+    folder_name = folder['name'] if folder else 'gallery'
+    
+    # Create temporary zip file
+    temp_zip = tempfile.NamedTemporaryFile(delete=False, suffix='.zip')
+    
+    try:
+        with zipfile.ZipFile(temp_zip.name, 'w', zipfile.ZIP_STORED) as zf:
+            for file_doc in files:
+                file_path = FILES_DIR / file_doc['stored_name']
+                if file_path.exists():
+                    zf.write(file_path, file_doc['name'])
+        
+        zip_filename = f"{folder_name}.zip"
+        return FastAPIFileResponse(
+            temp_zip.name, 
+            filename=zip_filename,
+            media_type='application/zip',
+            background=BackgroundTask(lambda: Path(temp_zip.name).unlink(missing_ok=True))
+        )
+    except Exception as e:
+        Path(temp_zip.name).unlink(missing_ok=True)
+        logger.error(f"ZIP creation failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create ZIP file")
+
 # ==================== FAVOURITES ROUTE ====================
 
 class FavouritesRequest(BaseModel):
