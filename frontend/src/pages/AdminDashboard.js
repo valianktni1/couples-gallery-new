@@ -12,6 +12,7 @@ import { useAuth } from '@/context/AuthContext';
 import DashboardHome from '@/components/admin/DashboardHome';
 import FolderManager from '@/components/admin/FolderManager';
 import ShareManager from '@/components/admin/ShareManager';
+import { ActivityLogs } from '@/components/admin/ActivityLogs';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -51,6 +52,7 @@ export default function AdminDashboard() {
     { path: '/admin', icon: LayoutDashboard, label: 'Dashboard', exact: true },
     { path: '/admin/folders', icon: FolderOpen, label: 'Galleries' },
     { path: '/admin/shares', icon: Share2, label: 'Share Links' },
+    { path: '/admin/activity', icon: Activity, label: 'Activity Logs' },
   ];
 
   const isActive = (path, exact = false) => {
@@ -118,6 +120,7 @@ export default function AdminDashboard() {
           <Route index element={<DashboardHome stats={stats} onRefresh={fetchStats} />} />
           <Route path="folders/*" element={<FolderManager onStatsChange={fetchStats} />} />
           <Route path="shares" element={<ShareManager />} />
+          <Route path="activity" element={<ActivityLogs />} />
         </Routes>
       </main>
     </div>
