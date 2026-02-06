@@ -1,134 +1,197 @@
-# Couples Gallery - Product Requirements Document
-
-## Project Overview
-A self-hosted couples gallery sharing application for wedding photographer Mark, replacing Nextcloud for client gallery management.
+# Weddings By Mark - Couples Gallery PRD
 
 ## Original Problem Statement
-Build a self-hosted app where the admin can:
-- Create hierarchical folder structures for couples (Wedding Images, Videos, Albums, Favourites)
-- Upload files through web interface
-- Create share links with custom tokens (format: `ginamark301021`)
-- Set 3-tier permissions: Read-only, Edit (no delete), Full access
-- Generate QR codes for any share link
-- Secure admin access with username/password
+Build a self-hosted application for sharing photos and videos with wedding clients (couples). The app should be simpler than Nextcloud with these key requirements:
 
-## User Personas
+- **Admin**: Secure login with username/password
+- **File Structure**: Create nested folders (e.g., `Wedding Images/Videos/Album/Favourites`)
+- **Upload**: Web interface to upload images and videos, support for large files (up to 25GB) and bulk uploads (600+ images)
+- **Sharing**: Generate unique, customizable share links per folder (e.g., `weddingsbymark.uk/ginamark301021`)
+- **Permissions**: Read-only (view/download), Edit (no delete), and Full access levels
+- **QR Codes**: Generate QR code for any share link
 
-### Primary: Mark (Admin/Photographer)
-- Needs fast gallery creation and management
-- Uploads 4600px images (needs thumbnail + preview generation)
-- Creates custom share links matching existing Nextcloud format
-- Requires dark mode admin interface
+## User Environment
+- **Hosting**: Self-hosted on TrueNAS server using Dockge
+- **Domain**: `weddingsbymark.uk` with SSL via Nginx Proxy Manager
+- **External Port**: 3029
+- **Data Paths**:
+  - App Data: `/mnt/apps/gallerydata`
+  - Media Files: `/mnt/nextcloud/galleryuserfiles`
 
-### Secondary: Couples (Gallery Viewers)
-- Access galleries via share link (e.g., weddingsbymark.uk/ginamark301021)
-- View thumbnails, larger previews, download originals
-- Stream videos in browser
-- Mobile-friendly browsing
+## Tech Stack
+- **Frontend**: React.js with Tailwind CSS and Shadcn/UI
+- **Backend**: Python FastAPI
+- **Database**: MongoDB
+- **Deployment**: Docker Compose
+- **Reverse Proxy**: Nginx (for internal routing)
 
-## Core Requirements (Static)
-
-### Authentication
-- [x] First-run setup wizard for admin account creation
-- [x] JWT-based authentication
-- [x] 24-hour token expiration
-- [x] Session persistence with auto-refresh
-
-### Gallery Management
-- [x] Create/rename/delete folders
-- [x] Nested folder support (unlimited depth)
-- [x] Folder path breadcrumb navigation
-- [x] File upload with drag-drop
-- [x] Multi-file upload support
-- [x] File delete functionality
-
-### Image Processing
-- [x] Thumbnail generation (~300px)
-- [x] Preview generation (~1500px, 30-35% of original)
-- [x] Original file preservation (4600px)
-- [x] Lazy loading for galleries
-
-### Video Support
-- [x] Video upload (mp4, mov, avi, mkv, webm)
-- [x] In-browser video streaming
-- [x] Video download option
-
-### Share Links
-- [x] Custom token support (e.g., `ginamark301021`)
-- [x] 3-tier permissions (read/edit/full)
-- [x] QR code generation
-- [x] QR code download as PNG
-- [x] Share link management (update permissions, delete)
-
-### Public Gallery
-- [x] Access via share token URL
-- [x] Folder navigation within share scope
-- [x] Image lightbox with navigation
-- [x] Download buttons
-- [x] Responsive design (mobile-friendly)
+---
 
 ## What's Been Implemented
 
-### Date: 2024-02-05
-- Full backend API (FastAPI + MongoDB)
-- React frontend with dark admin theme
-- Light elegant gallery theme for couples
-- "Weddings By Mark" branding (gold/champagne #ad946d)
-- Setup wizard and login flows
-- Dashboard with stats overview
-- Folder management with CRUD operations
-- File upload with thumbnail/preview generation
-- Share link creation with QR codes
-- Public gallery with lightbox
-- Docker Compose for TrueNAS deployment
-- Nginx proxy configuration
-- Deployment documentation
+### Core Features (100% Complete)
+- [x] Admin authentication with JWT tokens
+- [x] Setup wizard for first-time admin creation
+- [x] Folder management (create, rename, delete, nested folders)
+- [x] File uploads with chunked streaming (supports large files)
+- [x] Automatic thumbnail and preview generation for images
+- [x] Video file support with streaming playback
+- [x] Share link creation with custom tokens
+- [x] Three permission levels (read, edit, full)
+- [x] QR code generation for share links
+- [x] Public gallery page for clients
 
-## Tech Stack
-- **Backend**: FastAPI, MongoDB, Python 3.11
-- **Frontend**: React 19, Tailwind CSS, Framer Motion
-- **Storage**: Local filesystem (TrueNAS volumes)
-- **Auth**: JWT with bcrypt password hashing
-- **Images**: Pillow for processing
-- **QR**: qrcode library + qrcode.react
+### UI Features (100% Complete)
+- [x] Dark admin theme with "Weddings By Mark" branding
+- [x] Bulk upload with real-time progress bar
+- [x] File selection mode (Select, Select All, Deselect All)
+- [x] Download All files button
+- [x] Download Selected files button
+- [x] Delete Selected files with confirmation
+- [x] Image preview modal with download option
+- [x] Responsive file grid layout
+- [x] Breadcrumb navigation for nested folders
 
-## Deployment Configuration
-- **Domain**: weddingsbymark.uk
-- **Data Path**: /mnt/apps/couplesgallerydata
-- **Files Path**: /mnt/nextcloud/couplesgalleryfiles
-- **SSL**: Via Nginx Proxy Manager
+### Deployment (Ready)
+- [x] Docker Compose configuration
+- [x] Backend Dockerfile with timeout settings for large uploads
+- [x] Frontend Dockerfile
+- [x] Nginx configuration with 25GB upload limit
+- [x] README with simple deployment instructions
 
-## Prioritized Backlog
+---
 
-### P0 (Critical) - DONE
-- [x] Admin authentication
-- [x] Folder CRUD
-- [x] File upload
-- [x] Share links
-- [x] Public gallery
+## Database Schema
 
-### P1 (Important) - Future
-- [ ] Nextcloud folder import tool
-- [ ] Bulk file operations (select multiple, delete)
-- [ ] Favourites feature for couples (edit permission)
-- [ ] Gallery analytics (view counts)
+### admins
+```json
+{
+  "id": "uuid",
+  "username": "string",
+  "password_hash": "string",
+  "created_at": "datetime"
+}
+```
 
-### P2 (Nice to Have)
-- [ ] Email notifications when files added
+### folders
+```json
+{
+  "id": "uuid",
+  "name": "string",
+  "parent_id": "uuid|null",
+  "created_at": "datetime"
+}
+```
+
+### files
+```json
+{
+  "id": "uuid",
+  "name": "string",
+  "folder_id": "uuid",
+  "stored_name": "string",
+  "file_type": "image|video|other",
+  "size": "number",
+  "created_at": "datetime"
+}
+```
+
+### shares
+```json
+{
+  "id": "uuid",
+  "folder_id": "uuid",
+  "token": "string",
+  "permission": "read|edit|full",
+  "created_at": "datetime"
+}
+```
+
+---
+
+## API Endpoints
+
+### Setup & Auth
+- `GET /api/setup/status` - Check if admin exists
+- `POST /api/setup/admin` - Create initial admin
+- `POST /api/auth/login` - Login and get JWT token
+- `GET /api/auth/me` - Get current user info
+
+### Folders
+- `GET /api/folders` - List folders (with parent_id filter)
+- `POST /api/folders` - Create folder
+- `GET /api/folders/{id}` - Get folder details
+- `PUT /api/folders/{id}` - Update folder
+- `DELETE /api/folders/{id}` - Delete folder and contents
+- `GET /api/folders/{id}/path` - Get breadcrumb path
+
+### Files
+- `POST /api/files/upload` - Upload file
+- `GET /api/files` - List files in folder
+- `GET /api/files/{id}/thumbnail` - Get thumbnail
+- `GET /api/files/{id}/preview` - Get preview
+- `GET /api/files/{id}/download` - Download file
+- `GET /api/files/{id}/stream` - Stream video
+- `DELETE /api/files/{id}` - Delete file
+
+### Shares
+- `GET /api/shares` - List all shares
+- `POST /api/shares` - Create share
+- `PUT /api/shares/{id}` - Update permission
+- `DELETE /api/shares/{id}` - Delete share
+- `GET /api/shares/{id}/qrcode` - Get QR code image
+
+### Public Gallery
+- `GET /api/gallery/{token}` - Get gallery info
+- `GET /api/gallery/{token}/folders` - Get gallery folders
+- `GET /api/gallery/{token}/files` - Get gallery files
+- `GET /api/gallery/{token}/path` - Get gallery breadcrumb
+
+### Stats
+- `GET /api/stats` - Get dashboard statistics
+
+---
+
+## Deployment Ready Checklist
+
+### Completed
+- [x] All source code consolidated in `/app/docker/`
+- [x] Docker Compose with correct volume paths
+- [x] Backend with large file upload support
+- [x] Frontend with all UI features
+- [x] Nginx with 25GB limit and proper timeouts
+- [x] README with simple deployment instructions
+
+### For User to Do
+1. Use "Save to GitHub" button in Emergent
+2. SSH into TrueNAS server
+3. Clone repository to `/mnt/apps/dockge/stacks/couples-gallery`
+4. Create data directories
+5. Run `docker compose up -d`
+
+---
+
+## Future/Backlog Tasks
+
+### P1 - High Priority
+- [ ] Verify large file uploads work (25GB videos)
+- [ ] Test bulk uploads (600+ images)
+
+### P2 - Medium Priority
+- [ ] Nextcloud migration tool (import existing folder structure)
 - [ ] Expiring share links
-- [ ] Password-protected shares
-- [ ] Gallery comments
-- [ ] Slideshow mode
+- [ ] Password protection for share links
 
-## Next Tasks
-1. Add your actual logo (replace camera icon)
-2. Test Docker deployment on TrueNAS
-3. Configure Nginx Proxy Manager
-4. Migrate existing Nextcloud galleries
-5. Set up backup schedule
+### P3 - Nice to Have
+- [ ] Batch thumbnail regeneration
+- [ ] Gallery customization (themes/colors per client)
+- [ ] Download statistics
+- [ ] Email notification when gallery is viewed
 
-## Files Reference
-- `/app/backend/server.py` - Main API
-- `/app/frontend/src/pages/` - React pages
-- `/app/frontend/src/components/admin/` - Admin components
-- `/app/docker/` - Docker deployment files
+---
+
+## Test Credentials
+- Username: `admin`
+- Password: `admin123`
+
+(These are for development testing only - user will create their own on first setup)
