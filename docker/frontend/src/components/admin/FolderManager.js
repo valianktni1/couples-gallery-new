@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   FolderOpen, FolderPlus, ChevronRight, Upload, Trash2, Download,
   Image, Film, MoreVertical, Edit2, ArrowLeft, X, Check, Eye,
-  File as FileIcon
+  File as FileIcon, CheckSquare, Square, XCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -68,6 +68,14 @@ export default function FolderManager({ onStatsChange }) {
   // Upload
   const [uploadProgress, setUploadProgress] = useState({});
   const [isUploading, setIsUploading] = useState(false);
+  const [totalUploadProgress, setTotalUploadProgress] = useState({ current: 0, total: 0 });
+  
+  // Selection mode
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState(new Set());
+  const [showDeleteSelectedConfirm, setShowDeleteSelectedConfirm] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState({ current: 0, total: 0 });
 
   const headers = { Authorization: `Bearer ${token}` };
 
@@ -194,6 +202,98 @@ export default function FolderManager({ onStatsChange }) {
     }
   };
 
+  // Selection functions
+  const toggleSelectFile = (fileId) => {
+    const newSelected = new Set(selectedFiles);
+    if (newSelected.has(fileId)) {
+      newSelected.delete(fileId);
+    } else {
+      newSelected.add(fileId);
+    }
+    setSelectedFiles(newSelected);
+  };
+
+  const selectAllFiles = () => {
+    if (selectedFiles.size === files.length) {
+      setSelectedFiles(new Set());
+    } else {
+      setSelectedFiles(new Set(files.map(f => f.id)));
+    }
+  };
+
+  const exitSelectionMode = () => {
+    setSelectionMode(false);
+    setSelectedFiles(new Set());
+  };
+
+  const deleteSelectedFiles = async () => {
+    if (selectedFiles.size === 0) return;
+    
+    const filesToDelete = Array.from(selectedFiles);
+    let deleted = 0;
+    
+    for (const fileId of filesToDelete) {
+      try {
+        const res = await fetch(`${API}/files/${fileId}`, { method: 'DELETE', headers });
+        if (res.ok) {
+          deleted++;
+        }
+      } catch (e) {
+        console.error(`Failed to delete file ${fileId}:`, e);
+      }
+    }
+    
+    toast.success(`Deleted ${deleted} file(s)`);
+    setShowDeleteSelectedConfirm(false);
+    setSelectedFiles(new Set());
+    setSelectionMode(false);
+    fetchContent();
+    onStatsChange?.();
+  };
+
+  const downloadFiles = async (filesToDownload) => {
+    if (filesToDownload.length === 0) return;
+    
+    setIsDownloading(true);
+    setDownloadProgress({ current: 0, total: filesToDownload.length });
+    
+    for (let i = 0; i < filesToDownload.length; i++) {
+      const file = filesToDownload[i];
+      setDownloadProgress({ current: i + 1, total: filesToDownload.length });
+      
+      try {
+        // Create download link
+        const link = document.createElement('a');
+        link.href = `${BACKEND_URL}/api/files/${file.id}/download`;
+        link.download = file.name;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Small delay between downloads to prevent browser blocking
+        if (i < filesToDownload.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+      } catch (e) {
+        console.error(`Failed to download ${file.name}:`, e);
+      }
+    }
+    
+    setIsDownloading(false);
+    setDownloadProgress({ current: 0, total: 0 });
+    toast.success(`Downloaded ${filesToDownload.length} file(s)`);
+  };
+
+  const downloadAllFiles = () => {
+    downloadFiles(files);
+  };
+
+  const downloadSelectedFiles = () => {
+    const filesToDownload = files.filter(f => selectedFiles.has(f.id));
+    downloadFiles(filesToDownload);
+  };
+
   const onDrop = useCallback(async (acceptedFiles) => {
     if (!currentFolderId) {
       toast.error('Please select a folder first');
@@ -202,6 +302,9 @@ export default function FolderManager({ onStatsChange }) {
 
     setIsUploading(true);
     const progress = {};
+    const total = acceptedFiles.length;
+    let completed = 0;
+    setTotalUploadProgress({ current: 0, total });
     
     for (const file of acceptedFiles) {
       progress[file.name] = 0;
@@ -212,27 +315,54 @@ export default function FolderManager({ onStatsChange }) {
       formData.append('folder_id', currentFolderId);
       
       try {
-        const res = await fetch(`${API}/files/upload`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` },
-          body: formData
+        // Use XMLHttpRequest for progress tracking
+        await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+              const percent = Math.round((event.loaded / event.total) * 100);
+              progress[file.name] = percent;
+              setUploadProgress({ ...progress });
+            }
+          };
+          
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              progress[file.name] = 100;
+              setUploadProgress({ ...progress });
+              completed++;
+              setTotalUploadProgress({ current: completed, total });
+              resolve();
+            } else {
+              try {
+                const error = JSON.parse(xhr.responseText);
+                toast.error(`Failed to upload ${file.name}: ${error.detail}`);
+              } catch {
+                toast.error(`Failed to upload ${file.name}`);
+              }
+              reject();
+            }
+          };
+          
+          xhr.onerror = () => {
+            toast.error(`Failed to upload ${file.name}`);
+            reject();
+          };
+          
+          xhr.open('POST', `${API}/files/upload`);
+          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+          xhr.send(formData);
         });
-        
-        if (res.ok) {
-          progress[file.name] = 100;
-          setUploadProgress({ ...progress });
-        } else {
-          const error = await res.json();
-          toast.error(`Failed to upload ${file.name}: ${error.detail}`);
-        }
       } catch (e) {
-        toast.error(`Failed to upload ${file.name}`);
+        // Continue with next file
       }
     }
     
     setIsUploading(false);
     setUploadProgress({});
-    toast.success(`Uploaded ${acceptedFiles.length} file(s)`);
+    setTotalUploadProgress({ current: 0, total: 0 });
+    toast.success(`Uploaded ${completed}/${total} file(s)`);
     fetchContent();
     onStatsChange?.();
   }, [currentFolderId, token]);
@@ -319,18 +449,46 @@ export default function FolderManager({ onStatsChange }) {
       )}
 
       {/* Upload Progress */}
-      {Object.keys(uploadProgress).length > 0 && (
-        <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-4 mb-6">
-          <h3 className="text-sm font-medium text-white mb-3">Uploading...</h3>
-          {Object.entries(uploadProgress).map(([name, progress]) => (
-            <div key={name} className="mb-2">
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-400 truncate">{name}</span>
-                <span className="text-gray-500">{progress}%</span>
+      {(Object.keys(uploadProgress).length > 0 || isUploading) && (
+        <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-4 mb-6" data-testid="upload-progress">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-white">
+              Uploading... ({totalUploadProgress.current}/{totalUploadProgress.total})
+            </h3>
+            <span className="text-xs text-gray-400">
+              {Math.round((totalUploadProgress.current / totalUploadProgress.total) * 100) || 0}% complete
+            </span>
+          </div>
+          <Progress 
+            value={(totalUploadProgress.current / totalUploadProgress.total) * 100 || 0} 
+            className="h-2 mb-4" 
+          />
+          <div className="max-h-32 overflow-y-auto space-y-2">
+            {Object.entries(uploadProgress).map(([name, progress]) => (
+              <div key={name} className="flex items-center gap-2">
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs text-gray-400 truncate block">{name}</span>
+                </div>
+                <span className="text-xs text-gray-500 w-12 text-right">{progress}%</span>
+                {progress === 100 && <Check className="w-3 h-3 text-green-500" />}
               </div>
-              <Progress value={progress} className="h-1" />
-            </div>
-          ))}
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Download Progress */}
+      {isDownloading && (
+        <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-4 mb-6" data-testid="download-progress">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-white">
+              Downloading... ({downloadProgress.current}/{downloadProgress.total})
+            </h3>
+          </div>
+          <Progress 
+            value={(downloadProgress.current / downloadProgress.total) * 100} 
+            className="h-2" 
+          />
         </div>
       )}
 
@@ -406,23 +564,88 @@ export default function FolderManager({ onStatsChange }) {
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-medium text-gray-400">Files ({files.length})</h2>
-            {files.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  // Download all files by opening each in new tab
-                  files.forEach(file => {
-                    window.open(`${BACKEND_URL}/api/files/${file.id}/download`, '_blank');
-                  });
-                }}
-                className="border-[#333] text-gray-300 hover:bg-[#252525] text-xs"
-                data-testid="download-all-btn"
-              >
-                <Download className="w-3 h-3 mr-1" />
-                Download All
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {/* Selection Mode Toggle */}
+              {!selectionMode ? (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectionMode(true)}
+                    className="border-[#333] text-gray-300 hover:bg-[#252525] text-xs"
+                    data-testid="select-mode-btn"
+                  >
+                    <CheckSquare className="w-3 h-3 mr-1" />
+                    Select
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={downloadAllFiles}
+                    disabled={isDownloading}
+                    className="border-[#333] text-gray-300 hover:bg-[#252525] text-xs"
+                    data-testid="download-all-btn"
+                  >
+                    <Download className="w-3 h-3 mr-1" />
+                    Download All
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={selectAllFiles}
+                    className="border-[#333] text-gray-300 hover:bg-[#252525] text-xs"
+                    data-testid="select-all-btn"
+                  >
+                    {selectedFiles.size === files.length ? (
+                      <>
+                        <Square className="w-3 h-3 mr-1" />
+                        Deselect All
+                      </>
+                    ) : (
+                      <>
+                        <CheckSquare className="w-3 h-3 mr-1" />
+                        Select All ({files.length})
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={downloadSelectedFiles}
+                    disabled={selectedFiles.size === 0 || isDownloading}
+                    className="border-[#333] text-gray-300 hover:bg-[#252525] text-xs"
+                    data-testid="download-selected-btn"
+                  >
+                    <Download className="w-3 h-3 mr-1" />
+                    Download ({selectedFiles.size})
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowDeleteSelectedConfirm(true)}
+                    disabled={selectedFiles.size === 0}
+                    className="border-red-500/30 text-red-400 hover:bg-red-500/10 text-xs"
+                    data-testid="delete-selected-btn"
+                  >
+                    <Trash2 className="w-3 h-3 mr-1" />
+                    Delete ({selectedFiles.size})
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={exitSelectionMode}
+                    className="text-gray-400 hover:text-white text-xs"
+                    data-testid="exit-select-btn"
+                  >
+                    <XCircle className="w-3 h-3 mr-1" />
+                    Cancel
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
           <div className="file-grid">
             <AnimatePresence>
@@ -433,13 +656,37 @@ export default function FolderManager({ onStatsChange }) {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: index * 0.02 }}
-                  className="group bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] overflow-hidden hover:border-[#3a3a3a] transition-colors"
+                  className={`group bg-[#1a1a1a] rounded-lg border overflow-hidden transition-colors relative ${
+                    selectedFiles.has(file.id) 
+                      ? 'border-[#ad946d] ring-2 ring-[#ad946d]/30' 
+                      : 'border-[#2a2a2a] hover:border-[#3a3a3a]'
+                  } ${selectionMode ? 'cursor-pointer' : ''}`}
+                  onClick={() => selectionMode && toggleSelectFile(file.id)}
                   data-testid={`file-${file.id}`}
                 >
+                  {/* Selection checkbox overlay */}
+                  {selectionMode && (
+                    <div className="absolute top-2 left-2 z-10">
+                      <div 
+                        className={`w-6 h-6 rounded flex items-center justify-center ${
+                          selectedFiles.has(file.id) 
+                            ? 'bg-[#ad946d] text-white' 
+                            : 'bg-black/50 text-white border border-white/30'
+                        }`}
+                      >
+                        {selectedFiles.has(file.id) && <Check className="w-4 h-4" />}
+                      </div>
+                    </div>
+                  )}
+                  
                   {file.file_type === 'image' ? (
                     <div 
                       className="aspect-square bg-[#252525] relative cursor-pointer"
-                      onClick={() => setPreviewFile(file)}
+                      onClick={(e) => {
+                        if (!selectionMode) {
+                          setPreviewFile(file);
+                        }
+                      }}
                     >
                       <img
                         src={`${BACKEND_URL}${file.thumbnail_url}`}
@@ -452,50 +699,54 @@ export default function FolderManager({ onStatsChange }) {
                           e.target.parentElement.innerHTML = '<span class="text-gray-500">Loading...</span>';
                         }}
                       />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setPreviewFile(file); }}
-                          className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full backdrop-blur-sm"
-                          data-testid={`preview-${file.id}`}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <a
-                          href={`${BACKEND_URL}/api/files/${file.id}/download`}
-                          download
-                          onClick={(e) => e.stopPropagation()}
-                          className="bg-[#ad946d]/80 hover:bg-[#ad946d] text-white p-2 rounded-full backdrop-blur-sm"
-                          data-testid={`download-${file.id}`}
-                        >
-                          <Download className="w-4 h-4" />
-                        </a>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: file.id, name: file.name, type: 'file' }); }}
-                          className="bg-red-500/50 hover:bg-red-500/70 text-white p-2 rounded-full backdrop-blur-sm"
-                          data-testid={`delete-file-${file.id}`}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                      {!selectionMode && (
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setPreviewFile(file); }}
+                            className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full backdrop-blur-sm"
+                            data-testid={`preview-${file.id}`}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <a
+                            href={`${BACKEND_URL}/api/files/${file.id}/download`}
+                            download
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-[#ad946d]/80 hover:bg-[#ad946d] text-white p-2 rounded-full backdrop-blur-sm"
+                            data-testid={`download-${file.id}`}
+                          >
+                            <Download className="w-4 h-4" />
+                          </a>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: file.id, name: file.name, type: 'file' }); }}
+                            className="bg-red-500/50 hover:bg-red-500/70 text-white p-2 rounded-full backdrop-blur-sm"
+                            data-testid={`delete-file-${file.id}`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ) : file.file_type === 'video' ? (
                     <div className="aspect-square bg-[#252525] flex items-center justify-center relative">
                       <Film className="w-12 h-12 text-gray-500" />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                        <a
-                          href={`${BACKEND_URL}/api/files/${file.id}/download`}
-                          download
-                          className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full backdrop-blur-sm"
-                        >
-                          <FileIcon className="w-4 h-4" />
-                        </a>
-                        <button
-                          onClick={() => setDeleteTarget({ id: file.id, name: file.name, type: 'file' })}
-                          className="bg-red-500/50 hover:bg-red-500/70 text-white p-2 rounded-full backdrop-blur-sm"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                      {!selectionMode && (
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                          <a
+                            href={`${BACKEND_URL}/api/files/${file.id}/download`}
+                            download
+                            className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full backdrop-blur-sm"
+                          >
+                            <FileIcon className="w-4 h-4" />
+                          </a>
+                          <button
+                            onClick={() => setDeleteTarget({ id: file.id, name: file.name, type: 'file' })}
+                            className="bg-red-500/50 hover:bg-red-500/70 text-white p-2 rounded-full backdrop-blur-sm"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="aspect-square bg-[#252525] flex items-center justify-center">
@@ -623,6 +874,30 @@ export default function FolderManager({ onStatsChange }) {
               data-testid="confirm-delete-btn"
             >
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Selected Confirmation */}
+      <AlertDialog open={showDeleteSelectedConfirm} onOpenChange={setShowDeleteSelectedConfirm}>
+        <AlertDialogContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Delete {selectedFiles.size} files?</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              Are you sure you want to delete {selectedFiles.size} selected file(s)? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border-[#333] text-gray-300 hover:bg-[#252525] hover:text-white">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={deleteSelectedFiles}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              data-testid="confirm-delete-selected-btn"
+            >
+              Delete {selectedFiles.size} Files
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
