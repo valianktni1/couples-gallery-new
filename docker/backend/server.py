@@ -553,7 +553,7 @@ async def download_files_as_zip(file_ids: List[str], admin = Depends(get_current
         raise HTTPException(status_code=500, detail="Failed to create ZIP file")
 
 @api_router.get("/files/{file_id}/download")
-async def download_file(file_id: str, request: Request = None):
+async def download_file(file_id: str, request: Request):
     file_doc = await db.files.find_one({'id': file_id}, {'_id': 0})
     if not file_doc:
         raise HTTPException(status_code=404, detail="File not found")
@@ -561,11 +561,16 @@ async def download_file(file_id: str, request: Request = None):
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="File not found")
     
-    # Log download - get folder name for context
+    # Log download - get folder name and share token for context
     folder = await db.folders.find_one({'id': file_doc['folder_id']}, {'_id': 0})
     folder_name = folder['name'] if folder else 'Unknown'
-    ip = request.client.host if request else None
-    await log_activity('file_download', folder_name=folder_name, file_name=file_doc['name'], ip_address=ip)
+    
+    # Find share token if this folder is shared
+    share = await db.shares.find_one({'folder_id': file_doc['folder_id']}, {'_id': 0})
+    share_token = share['token'] if share else None
+    
+    ip = request.headers.get('X-Forwarded-For', request.client.host if request.client else 'unknown')
+    await log_activity('file_download', share_token=share_token, folder_name=folder_name, file_name=file_doc['name'], ip_address=ip)
     
     return FastAPIFileResponse(file_path, filename=file_doc['name'])
 
