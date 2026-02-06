@@ -397,13 +397,14 @@ async def get_preview(file_id: str):
     return FastAPIFileResponse(preview_path, media_type="image/jpeg")
 
 @api_router.get("/folders/{folder_id}/download-zip")
-async def download_folder_as_zip(folder_id: str, token: Optional[str] = None, admin = Depends(get_current_admin)):
+async def download_folder_as_zip(folder_id: str, token: Optional[str] = None):
     """Download all files in a folder as a ZIP archive"""
     import zipfile
     import tempfile
     
-    # Also allow token-based auth via query param for direct downloads
-    if not admin and token:
+    # Authenticate via URL token
+    admin = None
+    if token:
         try:
             payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
             username = payload.get('sub')
