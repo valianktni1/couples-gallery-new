@@ -165,41 +165,24 @@ export default function GalleryPage() {
   // Download all files
   const downloadAllFiles = () => {
     const imageFiles = files.filter(f => f.file_type === 'image');
-    if (imageFiles.length === 0) {
-      toast.error('No photos to download');
-      return;
-    }
-    
-    toast.info(`Starting download of ${imageFiles.length} photos...`);
-    imageFiles.forEach((file, i) => {
-      setTimeout(() => {
-        const link = document.createElement('a');
-        link.href = `${BACKEND_URL}/api/files/${file.id}/download`;
-        link.download = file.name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }, i * 500);
-    });
+    if (imageFiles.length === 0) { toast.error('No photos to download'); return; }
+    toast.info('Preparing ZIP download...');
+    // Use public ZIP endpoint
+    const folderId = currentFolderId || gallery?.folder_id;
+    const url = folderId 
+      ? `${BACKEND_URL}/api/gallery/${token}/download-zip?folder_id=${folderId}`
+      : `${BACKEND_URL}/api/gallery/${token}/download-zip`;
+    window.location.href = url;
   };
 
   // Download selected files
   const downloadSelectedFiles = () => {
-    if (selectedFiles.size === 0) {
-      toast.error('No photos selected');
-      return;
-    }
-    
-    toast.info(`Starting download of ${selectedFiles.size} photos...`);
-    const selected = files.filter(f => selectedFiles.has(f.id));
-    selected.forEach((file, i) => {
+    if (selectedFiles.size === 0) { toast.error('No photos selected'); return; }
+    toast.info(`Downloading ${selectedFiles.size} photos...`);
+    files.filter(f => selectedFiles.has(f.id)).forEach((file, i) => {
       setTimeout(() => {
-        const link = document.createElement('a');
-        link.href = `${BACKEND_URL}/api/files/${file.id}/download`;
-        link.download = file.name;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        const link = document.createElement('a'); link.href = `${BACKEND_URL}/api/files/${file.id}/download`;
+        link.download = file.name; document.body.appendChild(link); link.click(); document.body.removeChild(link);
       }, i * 500);
     });
   };
