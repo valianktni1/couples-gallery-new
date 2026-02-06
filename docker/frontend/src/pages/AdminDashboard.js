@@ -3,7 +3,7 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   FolderOpen, Share2, LayoutDashboard, LogOut,
-  ChevronRight, Plus, Upload, Settings, Users
+  ChevronRight, Plus, Upload, Settings, Users, Activity
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
@@ -12,6 +12,7 @@ import { useAuth } from '@/context/AuthContext';
 import DashboardHome from '@/components/admin/DashboardHome';
 import FolderManager from '@/components/admin/FolderManager';
 import ShareManager from '@/components/admin/ShareManager';
+import { ActivityLogs } from '@/components/admin/ActivityLogs';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
