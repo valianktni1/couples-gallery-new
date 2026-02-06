@@ -1,0 +1,226 @@
+<analysis>**original_problem_statement:**
+The user wants a self-hosted application for sharing photos and videos with their clients (couples). The app should be simpler than their current Nextcloud setup.
+
+**PRODUCT REQUIREMENTS:**
+- **Core Functionality:**
+    - **Admin:** Secure login with a username/password.
+    - **File Structure:** Create nested folders (e.g., ).
+    - **Upload:** A web interface to upload images and videos. Must support large files (up to 25GB) and bulk uploads (e.g., 600 images at once).
+    - **Sharing:** Generate unique, customizable share links per folder (e.g., ).
+    - **Permissions:** Share links should have three levels: Read-only (view/download), Edit (no delete), and Full access.
+    - **QR Codes:** Generate a QR code for any share link.
+- **User Interface (UI):**
+    - Incorporate the user's Weddings By Mark logo and brand aesthetic (elegant, dark admin theme, light public theme).
+    - Show thumbnails for fast browsing and a larger preview (~35%) on click.
+    - Provide in-browser video streaming.
+    - **Upload Progress:** A progress bar is required for bulk uploads.
+    - **File Management:** Download All for folders, plus Select, Select All, and Delete Selected functionality.
+- **Deployment & Hosting:**
+    - **Environment:** Self-hosted on a TrueNAS server using Dockge.
+    - **Domain:** Hosted at , with SSL handled by Nginx Proxy Manager.
+    - **Port:** The application must be accessible externally on port .
+    - **Deployment Artifacts:** A  file is required.
+    - **Data Paths:**
+        - App Data: 
+        - Media Files: 
+
+**User's preferred language**: English
+
+**what currently exists?**
+A full-stack application (FastAPI backend, React frontend, MongoDB) has been developed. The agent has created all necessary source code files, Dockerfiles, and a . The UI includes an admin dashboard with folder management, sharing, and QR code generation, as well as a public gallery page. The user's logo has been integrated.
+
+The agent and user have been troubleshooting the deployment on the user's TrueNAS server. This has involved manually creating files via shell commands, which has been error-prone and frustrating for the user. The user has requested to switch to a more straightforward GitHub-based deployment workflow.
+
+**Last working item**:
+    - Last item agent was working: The user confirmed the final dataset paths for their TrueNAS server ( and ) and requested to switch to a GitHub-based deployment to simplify the setup. The agent was acknowledging this and preparing to update all the application's configuration files to reflect these new paths and consolidate all recent feature additions (progress bar, selection tools) before guiding the user through the GitHub process.
+    - Status: NOT STARTED
+    - Agent Testing Done: N
+    - Which testing method agent to use? manual testing by curl
+    - User Testing Done: N
+
+**All Pending/In progress Issue list**:
+  - Issue 1: Finalize Deployment on TrueNAS (P0)
+  - Issue 2: Large file uploads (25GB) fail instantly (P1)
+  - Issue 3: Bulk upload functionality needs verification (P2)
+  - Issue 4: Download All and file selection features need verification (P2)
+  
+  **Issues Detail:**
+  - **Issue 1: Finalize Deployment on TrueNAS (P0)**
+     - **Attempted fixes:** The agent guided the user through a long and complex process of manually creating every file and folder via shell commands. This led to multiple errors due to path discrepancies ( vs ), dependency mismatches, and user typos.
+     - **Next debug checklist:**
+       1.  Update  with the correct final volume paths:  and .
+       2.  Consolidate all the latest code (fixes for uploads, UI features) into the  directory.
+       3.  Guide the user to use the Save to GitHub feature.
+       4.  Provide simple, clear  and  commands for the user to run on their TrueNAS server.
+     - **Why fix this issue and what will be achieved with the fix?** This is the primary blocker preventing the user from using the application. A successful deployment will fulfill the main goal of the project.
+     - **Status**:  IN PROGRESS
+     - **Is recurring issue?** Y
+     - **Should Test frontend/backend/both after fix?** both
+     - **Blocked on other issue:** None
+
+  - **Issue 2: Large file uploads (25GB) fail instantly (P1)**
+     - **Attempted fixes:** The agent provided an updated  with improved streaming logic and a  with increased uvicorn timeouts. However, the user was unable to apply this fix due to the difficulty of pasting large code blocks into their shell.
+     - **Next debug checklist:**
+       1. Ensure the final  in the  directory contains the correct large-file handling logic.
+       2. Ensure the final  has .
+       3. Ensure the final  includes the increased timeout settings for the  command.
+       4. Once deployed, instruct the user to test with a >2GB video file.
+     - **Why fix this issue and what will be achieved with the fix?** This is a core requirement for the user, who needs to upload large video files.
+     - **Status**:  IN PROGRESS
+     - **Is recurring issue?** Y
+     - **Should Test frontend/backend/both after fix?** backend
+     - **Blocked on other issue:** Issue 1: Finalize Deployment on TrueNAS
+
+  - **Issue 3: Bulk upload functionality needs verification (P2)**
+     - **Attempted fixes:** The agent provided an updated  that includes a progress bar UI for bulk uploads.
+     - **Next debug checklist:**
+       1. Ensure the final version of  is in the  directory.
+       2. Rebuild the frontend Docker image as part of the deployment.
+       3. Instruct the user to test by uploading a batch of images (~100) and observe the new progress bar UI.
+     - **Why fix this issue and what will be achieved with the fix?** Provides essential user feedback and prevents the user from thinking the application has hung during large uploads.
+     - **Status**:  IN PROGRESS
+     - **Is recurring issue?** N
+     - **Should Test frontend/backend/both after fix?** frontend
+     - **Blocked on other issue:** Issue 1: Finalize Deployment on TrueNAS
+
+  - **Issue 4: Download All and file selection features need verification (P2)**
+     - **Attempted fixes:** The agent updated  to include logic for selecting multiple files, deleting selected files, and downloading all/selected files sequentially.
+     - **Next debug checklist:**
+        1. Ensure the final version of  is in the  directory.
+        2. Instruct the user to test the Select button, select multiple files, and use the Delete Selected and Download Selected buttons.
+     - **Why fix this issue and what will be achieved with the fix?** Improves the usability of the file management interface, a core part of the application.
+     - **Status**:  IN PROGRESS
+     - **Is recurring issue?** N
+     - **Should Test frontend/backend/both after fix?** frontend
+     - **Blocked on other issue:** Issue 1: Finalize Deployment on TrueNAS
+
+**In progress Task List**:
+  - **Task 1: Consolidate Codebase for GitHub (P0)**
+     - **Where to resume:**
+       1.  Review and update  to use the final paths: , , , . Ensure the  service exposes port .
+       2.  Review and update  with the large file streaming logic.
+       3.  Review and update  with the  timeout flags.
+       4.  Review and update  with the progress bar and file selection features.
+       5.  Review and update  to use the fixed dependency versions (, , etc.).
+       6. After consolidating all code, explain to the user how to use the Save to GitHub button.
+     - **What will be achieved with this?** A single, correct, and complete source of code that the user can easily deploy.
+     - **Status**:  IN PROGRESS
+     - **Should Test frontend/backend/both after fix?** both
+     - **Blocked on something:** None. This is the next step.
+
+**Upcoming and Future Tasks**
+*   **Upcoming Tasks:**
+    *   **(P0) Guide User for GitHub Deployment:** Provide simple, copy-paste instructions for the user to clone their new GitHub repository to their TrueNAS server and run .
+    *   **(P1) Final Deployment Verification:** Work with the user to verify that the application is running correctly on  and that all features (especially large uploads and bulk actions) are working as expected.
+*   **Future Tasks:**
+    *   **(P2) Nextcloud Migration Tool:** Implement a script or feature to import the user's existing folder structure from Nextcloud.
+    *   **(P3) Expiring Share Links:** Add an option to set an expiration date for share links.
+    *   **(P3) Password Protection on Shares:** Add an option to password-protect individual share links.
+
+**Completed work in this session**
+- A full-stack couples gallery application was developed from scratch.
+- **Backend ():** Implemented all API endpoints for user auth, folder/file CRUD, sharing, QR codes, and gallery access.
+- **Frontend ():**
+    - Created a multi-page React application with pages for Setup, Login, Admin Dashboard, and Public Gallery.
+    - Integrated user branding and logo.
+    - Implemented UI for folder/file management, uploads, and share creation.
+- **Deployment ():**
+    - Created Dockerfiles for the backend and frontend.
+    - Created an Nginx reverse proxy configuration ().
+    - Created a  file to orchestrate all services.
+- **Debugging:**
+    - Resolved several frontend UI bugs reported by the user (e.g., folders not appearing, thumbnails not loading).
+    - Resolved several backend bugs, including Pydantic model conflicts.
+    - Resolved Docker build errors related to PostCSS and Python dependency conflicts (/).
+
+**Earlier issues found/mentioned but not fixed**
+None. All reported issues are either resolved or are part of the current pending/in-progress list.
+
+**Known issue recurrence from previous fork**
+- **Issue recurrence in previous fork:** N/A
+- **Recurrence count:** 0
+- **Status:** N/A
+
+**Code Architecture**
+
+
+**Key Technical Concepts**
+- **Full-Stack:** React.js frontend with a Python (FastAPI) backend.
+- **Database:** MongoDB for storing metadata about users, files, folders, and shares.
+- **Containerization:** The entire application is containerized using Docker and orchestrated with Docker Compose.
+- **Deployment:** Self-hosted on a user-managed TrueNAS server using Dockge.
+- **Authentication:** JWT (JSON Web Tokens) are used for securing the admin API endpoints.
+- **File Handling:** The backend uses  for asynchronous file streaming to handle large uploads efficiently. PIL (Pillow) is used for thumbnail generation.
+
+**key DB schema**
+- **admins**: 
+- **folders**: 
+- **files**: 
+- **shares**: 
+
+**changes in tech stack**
+None.
+
+**All files of reference**
+- : Defines all services, volumes, and networks. Needs to be updated with final paths.
+- : Contains all backend API logic. Needs to be updated for large file uploads.
+- : The main UI component for the admin. Needs to be updated with progress bars and selection features.
+- : Python dependencies. Needs to be updated to fix version conflicts.
+- : Reverse proxy config. Needs to have .
+- : Backend build instructions. Needs to be updated with uvicorn timeout flags.
+
+**Areas that need refactoring**:
+The entire deployment process needs to be refactored away from manual shell commands and towards a clean, GitHub-based workflow. The code itself is mostly functional but needs the final fixes consolidated.
+
+**key api endpoints**
+- , 
+- 
+-  (CRUD)
+- 
+-  (CRUD)
+-  (CRUD)
+- 
+
+**Critical Info for New Agent**
+- The user is not a developer and finds shell commands and Git difficult. Instructions must be extremely simple, explicit, and copy-paste ready.
+- The highest priority is to stop the manual file creation process and pivot to the GitHub workflow the user requested.
+- You must consolidate all the pending fixes into the codebase in the  directory *before* instructing the user to save to GitHub.
+- Double-check that the final  uses the user's latest specified paths:  for app data and  for media.
+
+**documents and test reports created in this job**
+- 
+- 
+-  (obsolete)
+-  (obsolete)
+
+**Last 10 User Messages and any pending HUMAN messages**
+1.  **user**: Asks how to reset the admin account because it was pre-filled.
+2.  **user**: Reports that bulk uploading ~600 images hangs and requests a progress bar.
+3.  **user**: Reports that Download All only downloads one file and requests Select All and Delete options.
+4.  **user**: Repeats the request for Download All and selection features.
+5.  **user**: Acknowledges the agent is testing the new features.
+6.  **user**: Reports that a 2GB video upload fails instantly and reiterates that large file support was a prerequisite.
+7.  **user**: Reports being unable to copy a large code block provided by the agent into the shell.
+8.  **user**: Acknowledges a command to remove a file failed due to a typo.
+9.  **user**: Suggests putting all the code on GitHub and creating a new YAML to simplify the deployment process.
+10. **user**: Confirms the final, new dataset paths for deployment: data in  and media in .
+
+**Project Health Check:**
+- **Broken:** Large file uploads. The current manual deployment on the user's server is completely broken.
+- **Mocked:** None.
+
+**3rd Party Integrations**
+None.
+
+**Testing status**
+- Testing agent used: YES (early in the process, but significant changes have been made since)
+- Troubleshoot agent used: NO
+- Test files created: None
+- Known regressions: Large file uploads, which were a core requirement, are failing. The / dependency conflict was a regression introduced during debugging.
+
+**Credentials to test flow:**
+The application uses a first-run setup wizard. To reset the admin account on the user's deployed instance, run:
+
+
+**What agent forgot to execute**
+The agent was in the process of fulfilling the user's latest requests (updating paths, consolidating code for GitHub) when the session ended. The next agent must complete this pivot to a GitHub-based workflow.</analysis>

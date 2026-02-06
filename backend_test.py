@@ -7,7 +7,7 @@ import tempfile
 from pathlib import Path
 
 class GalleryAPITester:
-    def __init__(self, base_url="https://mediashare-387.preview.emergentagent.com"):
+    def __init__(self, base_url="https://markgallery.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.token = None
