@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   FolderOpen, FolderPlus, ChevronRight, Upload, Trash2, Download,
   Image, Film, MoreVertical, Edit2, ArrowLeft, X, Check, Eye,
-  File as FileIcon, CheckSquare, Square, XCircle
+  File as FileIcon, CheckSquare, Square, XCircle, Copy
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
