@@ -27,7 +27,7 @@ services:
       - /mnt/apps/gallerydata/thumbnails:/app/data/thumbnails
       - /mnt/apps/gallerydata/previews:/app/data/previews
       - /mnt/nextcloud/galleryuserfiles:/app/files
-      - /mnt/nextcloud/ncuser2/weddings:/app/nextcloud:ro
+      - /mnt/nextcloud/ncuser2/admin/weddings:/app/nextcloud:ro
       - ./migrate_nextcloud.py:/app/migrate_nextcloud.py:ro
     environment:
       - MONGO_URL=mongodb://mongodb:27017
