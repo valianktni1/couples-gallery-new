@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
-  FolderOpen, ChevronRight, Download, X, Heart, Check,
+  FolderOpen, ChevronRight, Download, X, Heart, Check, Upload,
   Play, Image as ImageIcon, Film, ChevronLeft, ChevronRight as ChevronRightIcon,
   CheckSquare, Square, Save
 } from 'lucide-react';
