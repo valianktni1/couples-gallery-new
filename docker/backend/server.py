@@ -737,6 +737,112 @@ async def get_gallery_path(token: str, folder_id: str):
     
     return path
 
+# ==================== FAVOURITES ROUTE ====================
+
+class FavouritesRequest(BaseModel):
+    file_ids: List[str]
+
+@api_router.post("/gallery/{token}/favourites")
+async def save_favourites(token: str, request: FavouritesRequest):
+    """Save selected photos to Album Favourites folder"""
+    import shutil
+    
+    share = await db.shares.find_one({'token': token}, {'_id': 0})
+    if not share:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    # Check permission - need edit or full
+    if share['permission'] not in ['edit', 'full']:
+        raise HTTPException(status_code=403, detail="Permission denied")
+    
+    if not request.file_ids:
+        raise HTTPException(status_code=400, detail="No files selected")
+    
+    root_folder_id = share['folder_id']
+    
+    # Check if Album Favourites folder exists, create if not
+    favourites_folder = await db.folders.find_one({
+        'name': 'Album Favourites',
+        'parent_id': root_folder_id
+    }, {'_id': 0})
+    
+    if not favourites_folder:
+        # Create the folder
+        favourites_folder = {
+            'id': str(uuid.uuid4()),
+            'name': 'Album Favourites',
+            'parent_id': root_folder_id,
+            'created_at': datetime.now(timezone.utc).isoformat()
+        }
+        await db.folders.insert_one(favourites_folder)
+        logger.info(f"Created Album Favourites folder: {favourites_folder['id']}")
+    
+    favourites_folder_id = favourites_folder['id']
+    copied_count = 0
+    
+    for file_id in request.file_ids:
+        # Get original file
+        original_file = await db.files.find_one({'id': file_id}, {'_id': 0})
+        if not original_file:
+            continue
+        
+        # Check if already in favourites (by name)
+        existing = await db.files.find_one({
+            'folder_id': favourites_folder_id,
+            'name': original_file['name']
+        }, {'_id': 0})
+        
+        if existing:
+            # Skip if already exists
+            continue
+        
+        # Copy the physical file
+        original_path = FILES_DIR / original_file['stored_name']
+        if not original_path.exists():
+            continue
+        
+        # Generate new stored name for the copy
+        new_stored_name = f"{uuid.uuid4()}{Path(original_file['name']).suffix}"
+        new_path = FILES_DIR / new_stored_name
+        
+        try:
+            shutil.copy2(original_path, new_path)
+            
+            # Create new file record
+            new_file = {
+                'id': str(uuid.uuid4()),
+                'name': original_file['name'],
+                'folder_id': favourites_folder_id,
+                'stored_name': new_stored_name,
+                'file_type': original_file['file_type'],
+                'size': original_file['size'],
+                'created_at': datetime.now(timezone.utc).isoformat()
+            }
+            await db.files.insert_one(new_file)
+            
+            # Also copy thumbnail and preview if they exist
+            if original_file['file_type'] == 'image':
+                orig_thumb = THUMBNAILS_DIR / f"{original_file['id']}.jpg"
+                orig_preview = PREVIEWS_DIR / f"{original_file['id']}.jpg"
+                
+                if orig_thumb.exists():
+                    shutil.copy2(orig_thumb, THUMBNAILS_DIR / f"{new_file['id']}.jpg")
+                if orig_preview.exists():
+                    shutil.copy2(orig_preview, PREVIEWS_DIR / f"{new_file['id']}.jpg")
+            
+            copied_count += 1
+            
+        except Exception as e:
+            logger.error(f"Failed to copy file {file_id}: {e}")
+            continue
+    
+    return {
+        'success': True,
+        'copied_count': copied_count,
+        'folder_id': favourites_folder_id,
+        'message': f'{copied_count} photos saved to Album Favourites'
+    }
+
 # ==================== STATS ROUTE ====================
 
 @api_router.get("/stats")
