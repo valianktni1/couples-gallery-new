@@ -827,7 +827,7 @@ async def get_gallery_path(token: str, folder_id: str):
 MAX_PUBLIC_UPLOAD_SIZE = 500 * 1024 * 1024  # 500MB limit for public uploads
 
 @api_router.post("/gallery/{token}/upload")
-async def public_upload(token: str, folder_id: str = Form(...), file: UploadFile = File(...)):
+async def public_upload(token: str, folder_id: str = Form(...), file: UploadFile = File(...), request: Request = None):
     """Allow guests to upload files via share link (edit/full permission) - max 500MB"""
     share = await db.shares.find_one({'token': token}, {'_id': 0})
     if not share:
