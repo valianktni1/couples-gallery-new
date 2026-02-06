@@ -372,6 +372,34 @@ export default function GalleryPage() {
           </section>
         )}
 
+        {/* Upload section when no images but can edit */}
+        {imageFiles.length === 0 && canEdit && (
+          <section className="mb-12">
+            <div className="bg-[#ad946d]/10 border-2 border-dashed border-[#ad946d]/30 rounded-lg p-8 text-center">
+              <Upload className="w-12 h-12 text-[#ad946d] mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Upload Photos & Videos</h3>
+              <p className="text-gray-500 mb-4">Share your photos and videos from the event</p>
+              <Button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="bg-[#ad946d] hover:bg-[#96805d] text-white"
+                data-testid="section-upload-btn"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                {uploading ? 'Uploading...' : 'Choose Files'}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*,video/*"
+                onChange={handleUpload}
+                className="hidden"
+              />
+            </div>
+          </section>
+        )}
+
         {/* Images */}
         {imageFiles.length > 0 && (
           <section className="mb-12">
