@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   FolderOpen, FolderPlus, ChevronRight, Upload, Trash2, Download,
   Image, Film, MoreVertical, Edit2, ArrowLeft, X, Check, Eye,
-  File as FileIcon, CheckSquare, Square, XCircle, Copy
+  File as FileIcon, CheckSquare, Square, XCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -174,25 +174,6 @@ export default function FolderManager({ onStatsChange }) {
       }
     } catch (e) {
       toast.error('Failed to rename folder');
-    }
-  };
-
-  const duplicateFolder = async (folderId) => {
-    try {
-      const res = await fetch(`${API}/folders/${folderId}/duplicate`, {
-        method: 'POST',
-        headers
-      });
-      
-      if (res.ok) {
-        toast.success('Folder duplicated! You can now rename it.');
-        fetchContent();
-      } else {
-        const error = await res.json();
-        toast.error(error.detail || 'Failed to duplicate folder');
-      }
-    } catch (e) {
-      toast.error('Failed to duplicate folder');
     }
   };
 
@@ -526,17 +507,6 @@ export default function FolderManager({ onStatsChange }) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="bg-[#252525] border-[#333]">
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            duplicateFolder(folder.id);
-                          }}
-                          className="text-gray-300 focus:text-white focus:bg-[#333]"
-                          data-testid={`duplicate-folder-${folder.id}`}
-                        >
-                          <Copy className="w-4 h-4 mr-2" />
-                          Duplicate
-                        </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
