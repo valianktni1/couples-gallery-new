@@ -52,6 +52,18 @@ Build a self-hosted application for sharing photos and videos with wedding clien
 - [x] Responsive file grid layout
 - [x] Breadcrumb navigation for nested folders
 
+### Activity Logging (100% Complete - Feb 2026)
+- [x] Activity Logs dashboard page for admin
+- [x] Logs gallery views with share token, folder name, IP address, timestamp
+- [x] Logs file downloads with folder name, file name, IP address
+- [x] Stats cards showing counts for: Gallery Views, File Downloads, ZIP Downloads, File Uploads
+- [x] Paginated log table with refresh and clear all functionality
+
+### Admin Features (100% Complete - Feb 2026)
+- [x] **Any File Type Upload** - Admin can upload any file type for backup purposes (not just images/videos)
+- [x] Folder duplication for templates
+- [x] Share links for subfolders
+
 ### Deployment (Ready)
 - [x] Docker Compose configuration
 - [x] Backend Dockerfile with timeout settings for large uploads
