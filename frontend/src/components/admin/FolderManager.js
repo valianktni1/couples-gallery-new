@@ -6,11 +6,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   FolderOpen, FolderPlus, ChevronRight, Upload, Trash2, Download,
   Image, Film, MoreVertical, Edit2, ArrowLeft, X, Check, Eye,
-  File as FileIcon
+  File as FileIcon, CheckSquare, Square, XCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
