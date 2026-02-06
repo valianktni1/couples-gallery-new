@@ -880,6 +880,30 @@ export default function FolderManager({ onStatsChange }) {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Delete Selected Confirmation */}
+      <AlertDialog open={showDeleteSelectedConfirm} onOpenChange={setShowDeleteSelectedConfirm}>
+        <AlertDialogContent className="bg-[#1a1a1a] border-[#2a2a2a]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Delete {selectedFiles.size} files?</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-400">
+              Are you sure you want to delete {selectedFiles.size} selected file(s)? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border-[#333] text-gray-300 hover:bg-[#252525] hover:text-white">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={deleteSelectedFiles}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              data-testid="confirm-delete-selected-btn"
+            >
+              Delete {selectedFiles.size} Files
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Image Preview Modal */}
       <AnimatePresence>
         {previewFile && (
