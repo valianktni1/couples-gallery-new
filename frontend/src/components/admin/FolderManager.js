@@ -656,11 +656,11 @@ export default function FolderManager({ onStatsChange }) {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: index * 0.02 }}
-                  className={`group bg-[#1a1a1a] rounded-lg border overflow-hidden transition-colors ${
+                  className={`group bg-[#1a1a1a] rounded-lg border overflow-hidden transition-colors relative ${
                     selectedFiles.has(file.id) 
                       ? 'border-[#ad946d] ring-2 ring-[#ad946d]/30' 
                       : 'border-[#2a2a2a] hover:border-[#3a3a3a]'
-                  }`}
+                  } ${selectionMode ? 'cursor-pointer' : ''}`}
                   onClick={() => selectionMode && toggleSelectFile(file.id)}
                   data-testid={`file-${file.id}`}
                 >
