@@ -450,18 +450,46 @@ export default function FolderManager({ onStatsChange }) {
       )}
 
       {/* Upload Progress */}
-      {Object.keys(uploadProgress).length > 0 && (
-        <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-4 mb-6">
-          <h3 className="text-sm font-medium text-white mb-3">Uploading...</h3>
-          {Object.entries(uploadProgress).map(([name, progress]) => (
-            <div key={name} className="mb-2">
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-400 truncate">{name}</span>
-                <span className="text-gray-500">{progress}%</span>
+      {(Object.keys(uploadProgress).length > 0 || isUploading) && (
+        <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-4 mb-6" data-testid="upload-progress">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-white">
+              Uploading... ({totalUploadProgress.current}/{totalUploadProgress.total})
+            </h3>
+            <span className="text-xs text-gray-400">
+              {Math.round((totalUploadProgress.current / totalUploadProgress.total) * 100) || 0}% complete
+            </span>
+          </div>
+          <Progress 
+            value={(totalUploadProgress.current / totalUploadProgress.total) * 100 || 0} 
+            className="h-2 mb-4" 
+          />
+          <div className="max-h-32 overflow-y-auto space-y-2">
+            {Object.entries(uploadProgress).map(([name, progress]) => (
+              <div key={name} className="flex items-center gap-2">
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs text-gray-400 truncate block">{name}</span>
+                </div>
+                <span className="text-xs text-gray-500 w-12 text-right">{progress}%</span>
+                {progress === 100 && <Check className="w-3 h-3 text-green-500" />}
               </div>
-              <Progress value={progress} className="h-1" />
-            </div>
-          ))}
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Download Progress */}
+      {isDownloading && (
+        <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-4 mb-6" data-testid="download-progress">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-white">
+              Downloading... ({downloadProgress.current}/{downloadProgress.total})
+            </h3>
+          </div>
+          <Progress 
+            value={(downloadProgress.current / downloadProgress.total) * 100} 
+            className="h-2" 
+          />
         </div>
       )}
 
