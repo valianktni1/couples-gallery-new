@@ -120,6 +120,7 @@ export default function AdminDashboard() {
           <Route index element={<DashboardHome stats={stats} onRefresh={fetchStats} />} />
           <Route path="folders/*" element={<FolderManager onStatsChange={fetchStats} />} />
           <Route path="shares" element={<ShareManager />} />
+          <Route path="activity" element={<ActivityLogs />} />
         </Routes>
       </main>
     </div>
