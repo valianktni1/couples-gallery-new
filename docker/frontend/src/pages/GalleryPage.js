@@ -283,7 +283,7 @@ export default function GalleryPage() {
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-center">
             <img 
               src={LOGO_URL} 
               alt="Weddings By Mark" 
