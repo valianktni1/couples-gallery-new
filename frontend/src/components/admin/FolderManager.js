@@ -512,21 +512,6 @@ export default function FolderManager({ onStatsChange }) {
         </div>
       )}
 
-      {/* Download Progress */}
-      {isDownloading && (
-        <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-4 mb-6" data-testid="download-progress">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-white">
-              Downloading... ({downloadProgress.current}/{downloadProgress.total})
-            </h3>
-          </div>
-          <Progress 
-            value={(downloadProgress.current / downloadProgress.total) * 100} 
-            className="h-2" 
-          />
-        </div>
-      )}
-
       {/* Folders Grid */}
       {folders.length > 0 && (
         <section className="mb-8">
