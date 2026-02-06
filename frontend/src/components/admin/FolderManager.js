@@ -251,42 +251,78 @@ export default function FolderManager({ onStatsChange }) {
     onStatsChange?.();
   };
 
-  const downloadFiles = async (filesToDownload) => {
-    if (filesToDownload.length === 0) return;
+  // Download all files as ZIP
+  const downloadAllAsZip = async () => {
+    if (!currentFolderId || files.length === 0) return;
     
     setIsDownloading(true);
-    setDownloadProgress({ current: 0, total: filesToDownload.length });
+    toast.info('Preparing ZIP file...');
     
-    for (let i = 0; i < filesToDownload.length; i++) {
-      const file = filesToDownload[i];
-      setDownloadProgress({ current: i + 1, total: filesToDownload.length });
+    try {
+      const link = document.createElement('a');
+      link.href = `${BACKEND_URL}/api/folders/${currentFolderId}/download-zip`;
+      link.download = 'gallery.zip';
       
-      try {
-        // Create download link
-        const link = document.createElement('a');
-        link.href = `${BACKEND_URL}/api/files/${file.id}/download`;
-        link.download = file.name;
-        link.target = '_blank';
+      // Add auth header via fetch and blob
+      const res = await fetch(`${API}/folders/${currentFolderId}/download-zip`, { headers });
+      
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        link.href = url;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
-        // Small delay between downloads to prevent browser blocking
-        if (i < filesToDownload.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 300));
-        }
-      } catch (e) {
-        console.error(`Failed to download ${file.name}:`, e);
+        window.URL.revokeObjectURL(url);
+        toast.success('ZIP download started!');
+      } else {
+        const error = await res.json();
+        toast.error(error.detail || 'Failed to create ZIP');
       }
+    } catch (e) {
+      console.error('ZIP download failed:', e);
+      toast.error('Failed to download ZIP');
+    } finally {
+      setIsDownloading(false);
     }
-    
-    setIsDownloading(false);
-    setDownloadProgress({ current: 0, total: 0 });
-    toast.success(`Downloaded ${filesToDownload.length} file(s)`);
   };
 
-  const downloadAllFiles = () => {
-    downloadFiles(files);
+  // Download selected files as ZIP
+  const downloadSelectedAsZip = async () => {
+    if (selectedFiles.size === 0) return;
+    
+    setIsDownloading(true);
+    toast.info('Preparing ZIP file...');
+    
+    try {
+      const fileIds = Array.from(selectedFiles);
+      const res = await fetch(`${API}/files/download-zip`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify(fileIds)
+      });
+      
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'selected_files.zip';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        toast.success('ZIP download started!');
+      } else {
+        const error = await res.json();
+        toast.error(error.detail || 'Failed to create ZIP');
+      }
+    } catch (e) {
+      console.error('ZIP download failed:', e);
+      toast.error('Failed to download ZIP');
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const downloadSelectedFiles = () => {
