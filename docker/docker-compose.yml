@@ -1,19 +1,10 @@
-version: '3.8'
-
-# Couples Gallery - Weddings By Mark
-# Production-ready Docker Compose for TrueNAS/Dockge
-# Max upload: 25GB | Storage: Persistent volumes
-
 services:
-  # MongoDB Database
   mongodb:
     image: mongo:7.0
-    container_name: couples-gallery-db
+    container_name: gallery-db
     restart: unless-stopped
     volumes:
-      - /mnt/apps/couplesgallerydata/mongodb:/data/db
-    environment:
-      - MONGO_INITDB_DATABASE=couples_gallery
+      - /mnt/apps/gallerydata/mongodb:/data/db
     networks:
       - gallery-network
     healthcheck:
@@ -23,20 +14,19 @@ services:
       retries: 5
       start_period: 30s
 
-  # Backend API (FastAPI)
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: couples-gallery-api
+    container_name: gallery-api
     restart: unless-stopped
     depends_on:
       mongodb:
         condition: service_healthy
     volumes:
-      - /mnt/apps/couplesgallerydata/thumbnails:/app/data/thumbnails
-      - /mnt/apps/couplesgallerydata/previews:/app/data/previews
-      - /mnt/nextcloud/couplesgalleryfiles:/app/files
+      - /mnt/apps/gallerydata/thumbnails:/app/data/thumbnails
+      - /mnt/apps/gallerydata/previews:/app/data/previews
+      - /mnt/nextcloud/galleryuserfiles:/app/files
     environment:
       - MONGO_URL=mongodb://mongodb:27017
       - DB_NAME=couples_gallery
@@ -54,14 +44,13 @@ services:
       retries: 5
       start_period: 15s
 
-  # Frontend (React)
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
       args:
         - REACT_APP_BACKEND_URL=https://weddingsbymark.uk
-    container_name: couples-gallery-web
+    container_name: gallery-web
     restart: unless-stopped
     depends_on:
       backend:
@@ -75,10 +64,9 @@ services:
       retries: 5
       start_period: 30s
 
-  # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
-    container_name: couples-gallery-nginx
+    container_name: gallery-nginx
     restart: unless-stopped
     depends_on:
       backend:
@@ -91,11 +79,6 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     networks:
       - gallery-network
-    healthcheck:
-      test: nginx -t || exit 1
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
 networks:
   gallery-network:
