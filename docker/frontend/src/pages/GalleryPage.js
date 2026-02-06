@@ -31,6 +31,8 @@ export default function GalleryPage() {
   const [selectedFiles, setSelectedFiles] = useState(new Set());
   const [favouritesMode, setFavouritesMode] = useState(false);
   const [savingFavourites, setSavingFavourites] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     fetchGallery();
@@ -41,6 +43,41 @@ export default function GalleryPage() {
       fetchContent();
     }
   }, [gallery, currentFolderId]);
+
+  const handleUpload = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    const folderId = currentFolderId || gallery?.folder_id;
+    if (!folderId) { toast.error('Cannot upload here'); return; }
+    
+    setUploading(true);
+    let uploaded = 0;
+    
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder_id', folderId);
+      
+      try {
+        const res = await fetch(`${API}/gallery/${token}/upload`, {
+          method: 'POST',
+          body: formData
+        });
+        if (res.ok) uploaded++;
+        else toast.error(`Failed to upload ${file.name}`);
+      } catch (err) {
+        toast.error(`Failed to upload ${file.name}`);
+      }
+    }
+    
+    setUploading(false);
+    if (uploaded > 0) {
+      toast.success(`Uploaded ${uploaded} file(s)`);
+      fetchContent();
+    }
+    e.target.value = '';
+  };
 
   const fetchGallery = async () => {
     try {
