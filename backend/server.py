@@ -397,10 +397,22 @@ async def get_preview(file_id: str):
     return FastAPIFileResponse(preview_path, media_type="image/jpeg")
 
 @api_router.get("/folders/{folder_id}/download-zip")
-async def download_folder_as_zip(folder_id: str, admin = Depends(get_current_admin)):
+async def download_folder_as_zip(folder_id: str, token: Optional[str] = None, admin = Depends(get_current_admin)):
     """Download all files in a folder as a ZIP archive"""
     import zipfile
     import tempfile
+    
+    # Also allow token-based auth via query param for direct downloads
+    if not admin and token:
+        try:
+            payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+            username = payload.get('sub')
+            admin = await db.admins.find_one({'username': username}, {'_id': 0})
+        except:
+            pass
+    
+    if not admin:
+        raise HTTPException(status_code=401, detail="Not authenticated")
     
     folder = await db.folders.find_one({'id': folder_id}, {'_id': 0})
     if not folder:
@@ -414,11 +426,11 @@ async def download_folder_as_zip(folder_id: str, admin = Depends(get_current_adm
     temp_zip = tempfile.NamedTemporaryFile(delete=False, suffix='.zip')
     
     try:
-        with zipfile.ZipFile(temp_zip.name, 'w', zipfile.ZIP_DEFLATED) as zf:
+        with zipfile.ZipFile(temp_zip.name, 'w', zipfile.ZIP_STORED) as zf:
             for file_doc in files:
                 file_path = FILES_DIR / file_doc['stored_name']
                 if file_path.exists():
-                    # Add file to zip with original name
+                    # Add file to zip with original name (no compression for speed)
                     zf.write(file_path, file_doc['name'])
         
         # Return the zip file
