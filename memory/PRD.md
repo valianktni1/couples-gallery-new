@@ -43,10 +43,10 @@ Build a self-hosted application for sharing photos and videos with wedding clien
 
 ### UI Features (100% Complete)
 - [x] Dark admin theme with "Weddings By Mark" branding
-- [x] Bulk upload with real-time progress bar
+- [x] Bulk upload with real-time progress bar (XHR-based with per-file tracking)
 - [x] File selection mode (Select, Select All, Deselect All)
-- [x] Download All files button
-- [x] Download Selected files button
+- [x] **Download All as ZIP** - single ZIP file download
+- [x] **Download Selected as ZIP** - selected files as ZIP
 - [x] Delete Selected files with confirmation
 - [x] Image preview modal with download option
 - [x] Responsive file grid layout
