@@ -294,26 +294,6 @@ export default function FolderManager({ onStatsChange }) {
     } finally {
       setIsDownloading(false);
     }
-  };;
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        toast.success('ZIP download started!');
-      } else {
-        const error = await res.json();
-        toast.error(error.detail || 'Failed to create ZIP');
-      }
-    } catch (e) {
-      console.error('ZIP download failed:', e);
-      toast.error('Failed to download ZIP');
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
-  const downloadSelectedFiles = () => {
-    const filesToDownload = files.filter(f => selectedFiles.has(f.id));
-    downloadFiles(filesToDownload);
   };
 
   const onDrop = useCallback(async (acceptedFiles) => {
