@@ -860,7 +860,7 @@ export default function FolderManager({ onStatsChange }) {
           <AlertDialogHeader>
             <AlertDialogTitle className="text-white">Delete {deleteTarget?.type}?</AlertDialogTitle>
             <AlertDialogDescription className="text-gray-400">
-              Are you sure you want to delete "{deleteTarget?.name}"?
+              Are you sure you want to delete &quot;{deleteTarget?.name}&quot;?
               {deleteTarget?.type === 'folder' && ' All files and subfolders will be permanently deleted.'}
             </AlertDialogDescription>
           </AlertDialogHeader>

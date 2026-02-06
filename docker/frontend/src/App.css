@@ -96,6 +96,8 @@
     text-align: center;
     transition: all 0.2s ease;
     cursor: pointer;
+    position: relative;
+    z-index: 1;
 }
 
 .dropzone:hover,
