@@ -871,6 +871,12 @@ async def public_upload(token: str, folder_id: str = Form(...), file: UploadFile
         except Exception as e:
             logger.error(f"Thumbnail generation failed: {e}")
     
+    # Log upload activity
+    folder = await db.folders.find_one({'id': folder_id}, {'_id': 0})
+    folder_name = folder['name'] if folder else 'Unknown'
+    ip = request.client.host if request else None
+    await log_activity('file_upload', share_token=token, folder_name=folder_name, file_name=file.filename, ip_address=ip)
+    
     return {'id': file_doc['id'], 'name': file_doc['name'], 'message': 'Upload successful'}
 
 # ==================== PUBLIC ZIP DOWNLOAD ====================
