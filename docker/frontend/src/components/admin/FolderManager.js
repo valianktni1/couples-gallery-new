@@ -513,6 +513,17 @@ export default function FolderManager({ onStatsChange }) {
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
+                            duplicateFolder(folder.id);
+                          }}
+                          className="text-gray-300 focus:text-white focus:bg-[#333]"
+                          data-testid={`duplicate-folder-${folder.id}`}
+                        >
+                          <Copy className="w-4 h-4 mr-2" />
+                          Duplicate
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setEditingFolder({ id: folder.id, newName: folder.name });
                           }}
                           className="text-gray-300 focus:text-white focus:bg-[#333]"
