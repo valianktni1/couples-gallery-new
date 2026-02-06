@@ -371,10 +371,7 @@ export default function FolderManager({ onStatsChange }) {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: {
-      'image/*': ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.heif'],
-      'video/*': ['.mp4', '.mov', '.avi', '.mkv', '.webm']
-    },
+    // Admin can upload any file type
     disabled: !currentFolderId
   });
 
