@@ -235,6 +235,33 @@ async def get_folders(parent_id: Optional[str] = None, admin = Depends(get_curre
         result.append(FolderResponse(**f, file_count=file_count, subfolder_count=subfolder_count))
     return result
 
+@api_router.get("/folders/all", response_model=List[FolderResponse])
+async def get_all_folders(admin = Depends(get_current_admin)):
+    """Get all folders including subfolders with full path names"""
+    all_folders = await db.folders.find({}, {'_id': 0}).to_list(1000)
+    
+    # Build path names for each folder
+    async def get_path_name(folder):
+        path_parts = [folder['name']]
+        current = folder
+        while current.get('parent_id'):
+            parent = await db.folders.find_one({'id': current['parent_id']}, {'_id': 0})
+            if parent:
+                path_parts.insert(0, parent['name'])
+                current = parent
+            else:
+                break
+        return ' / '.join(path_parts)
+    
+    result = []
+    for f in all_folders:
+        file_count = await db.files.count_documents({'folder_id': f['id']})
+        subfolder_count = await db.folders.count_documents({'parent_id': f['id']})
+        path_name = await get_path_name(f)
+        folder_with_path = {**f, 'name': path_name}
+        result.append(FolderResponse(**folder_with_path, file_count=file_count, subfolder_count=subfolder_count))
+    return result
+
 @api_router.get("/folders/{folder_id}", response_model=FolderResponse)
 async def get_folder(folder_id: str, admin = Depends(get_current_admin)):
     folder = await db.folders.find_one({'id': folder_id}, {'_id': 0})
