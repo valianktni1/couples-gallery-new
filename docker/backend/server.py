@@ -271,6 +271,37 @@ async def get_folder(folder_id: str, admin = Depends(get_current_admin)):
     subfolder_count = await db.folders.count_documents({'parent_id': folder_id})
     return FolderResponse(**folder, file_count=file_count, subfolder_count=subfolder_count)
 
+@api_router.post("/folders/{folder_id}/duplicate", response_model=FolderResponse)
+async def duplicate_folder(folder_id: str, admin = Depends(get_current_admin)):
+    """Duplicate a folder and all its subfolders (without files)"""
+    original = await db.folders.find_one({'id': folder_id}, {'_id': 0})
+    if not original:
+        raise HTTPException(status_code=404, detail="Folder not found")
+    
+    async def copy_folder(src_folder, new_parent_id):
+        """Recursively copy folder structure"""
+        new_folder = {
+            'id': str(uuid.uuid4()),
+            'name': src_folder['name'] + ' (Copy)' if new_parent_id == src_folder.get('parent_id') else src_folder['name'],
+            'parent_id': new_parent_id,
+            'created_at': datetime.now(timezone.utc).isoformat()
+        }
+        await db.folders.insert_one(new_folder)
+        
+        # Copy subfolders recursively
+        subfolders = await db.folders.find({'parent_id': src_folder['id']}, {'_id': 0}).to_list(1000)
+        for sf in subfolders:
+            await copy_folder(sf, new_folder['id'])
+        
+        return new_folder
+    
+    # Create the duplicate
+    new_folder = await copy_folder(original, original.get('parent_id'))
+    
+    file_count = 0
+    subfolder_count = await db.folders.count_documents({'parent_id': new_folder['id']})
+    return FolderResponse(**new_folder, file_count=file_count, subfolder_count=subfolder_count)
+
 @api_router.put("/folders/{folder_id}", response_model=FolderResponse)
 async def update_folder(folder_id: str, folder: FolderUpdate, admin = Depends(get_current_admin)):
     result = await db.folders.update_one({'id': folder_id}, {'$set': {'name': folder.name}})
