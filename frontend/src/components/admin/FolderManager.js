@@ -250,40 +250,15 @@ export default function FolderManager({ onStatsChange }) {
     onStatsChange?.();
   };
 
-  // Download all files as ZIP
-  const downloadAllAsZip = async () => {
+  // Download all files as ZIP - direct link (no blob to avoid memory crash)
+  const downloadAllAsZip = () => {
     if (!currentFolderId || files.length === 0) return;
     
-    setIsDownloading(true);
-    toast.info('Preparing ZIP file...');
+    toast.info('Starting ZIP download...');
     
-    try {
-      const link = document.createElement('a');
-      link.href = `${BACKEND_URL}/api/folders/${currentFolderId}/download-zip`;
-      link.download = 'gallery.zip';
-      
-      // Add auth header via fetch and blob
-      const res = await fetch(`${API}/folders/${currentFolderId}/download-zip`, { headers });
-      
-      if (res.ok) {
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-        link.href = url;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        toast.success('ZIP download started!');
-      } else {
-        const error = await res.json();
-        toast.error(error.detail || 'Failed to create ZIP');
-      }
-    } catch (e) {
-      console.error('ZIP download failed:', e);
-      toast.error('Failed to download ZIP');
-    } finally {
-      setIsDownloading(false);
-    }
+    // Open in new window with token in URL for auth
+    const downloadUrl = `${BACKEND_URL}/api/folders/${currentFolderId}/download-zip?token=${token}`;
+    window.open(downloadUrl, '_blank');
   };
 
   // Download selected files as ZIP
@@ -295,19 +270,31 @@ export default function FolderManager({ onStatsChange }) {
     
     try {
       const fileIds = Array.from(selectedFiles);
-      const res = await fetch(`${API}/files/download-zip`, {
-        method: 'POST',
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify(fileIds)
-      });
       
-      if (res.ok) {
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'selected_files.zip';
-        document.body.appendChild(link);
+      // For selected files, we need POST so use a form submission approach
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = `${BACKEND_URL}/api/files/download-zip?token=${token}`;
+      form.target = '_blank';
+      
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'file_ids';
+      input.value = JSON.stringify(fileIds);
+      form.appendChild(input);
+      
+      document.body.appendChild(form);
+      form.submit();
+      document.body.removeChild(form);
+      
+      toast.success('ZIP download started!');
+    } catch (e) {
+      console.error('ZIP download failed:', e);
+      toast.error('Failed to download ZIP');
+    } finally {
+      setIsDownloading(false);
+    }
+  };;
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
