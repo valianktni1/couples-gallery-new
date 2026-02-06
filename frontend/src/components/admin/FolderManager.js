@@ -303,6 +303,9 @@ export default function FolderManager({ onStatsChange }) {
 
     setIsUploading(true);
     const progress = {};
+    const total = acceptedFiles.length;
+    let completed = 0;
+    setTotalUploadProgress({ current: 0, total });
     
     for (const file of acceptedFiles) {
       progress[file.name] = 0;
@@ -313,27 +316,54 @@ export default function FolderManager({ onStatsChange }) {
       formData.append('folder_id', currentFolderId);
       
       try {
-        const res = await fetch(`${API}/files/upload`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` },
-          body: formData
+        // Use XMLHttpRequest for progress tracking
+        await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+              const percent = Math.round((event.loaded / event.total) * 100);
+              progress[file.name] = percent;
+              setUploadProgress({ ...progress });
+            }
+          };
+          
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              progress[file.name] = 100;
+              setUploadProgress({ ...progress });
+              completed++;
+              setTotalUploadProgress({ current: completed, total });
+              resolve();
+            } else {
+              try {
+                const error = JSON.parse(xhr.responseText);
+                toast.error(`Failed to upload ${file.name}: ${error.detail}`);
+              } catch {
+                toast.error(`Failed to upload ${file.name}`);
+              }
+              reject();
+            }
+          };
+          
+          xhr.onerror = () => {
+            toast.error(`Failed to upload ${file.name}`);
+            reject();
+          };
+          
+          xhr.open('POST', `${API}/files/upload`);
+          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+          xhr.send(formData);
         });
-        
-        if (res.ok) {
-          progress[file.name] = 100;
-          setUploadProgress({ ...progress });
-        } else {
-          const error = await res.json();
-          toast.error(`Failed to upload ${file.name}: ${error.detail}`);
-        }
       } catch (e) {
-        toast.error(`Failed to upload ${file.name}`);
+        // Continue with next file
       }
     }
     
     setIsUploading(false);
     setUploadProgress({});
-    toast.success(`Uploaded ${acceptedFiles.length} file(s)`);
+    setTotalUploadProgress({ current: 0, total: 0 });
+    toast.success(`Uploaded ${completed}/${total} file(s)`);
     fetchContent();
     onStatsChange?.();
   }, [currentFolderId, token]);
