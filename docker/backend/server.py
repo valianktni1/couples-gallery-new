@@ -882,7 +882,7 @@ async def public_upload(token: str, folder_id: str = Form(...), file: UploadFile
 # ==================== PUBLIC ZIP DOWNLOAD ====================
 
 @api_router.get("/gallery/{token}/download-zip")
-async def download_gallery_zip(token: str, folder_id: Optional[str] = None):
+async def download_gallery_zip(token: str, folder_id: Optional[str] = None, request: Request = None):
     """Download all files in gallery folder as ZIP (for clients)"""
     import zipfile
     import tempfile
@@ -905,6 +905,12 @@ async def download_gallery_zip(token: str, folder_id: Optional[str] = None):
     # Get folder name for zip filename
     folder = await db.folders.find_one({'id': target_folder_id}, {'_id': 0})
     folder_name = folder['name'] if folder else 'gallery'
+    
+    # Log ZIP download
+    ip = request.client.host if request else None
+    file_count = len(files)
+    await log_activity('zip_download', share_token=token, folder_name=folder_name, 
+                       details={'file_count': file_count}, ip_address=ip)
     
     # Create temporary zip file
     temp_zip = tempfile.NamedTemporaryFile(delete=False, suffix='.zip')
