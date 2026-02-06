@@ -203,6 +203,98 @@ export default function FolderManager({ onStatsChange }) {
     }
   };
 
+  // Selection functions
+  const toggleSelectFile = (fileId) => {
+    const newSelected = new Set(selectedFiles);
+    if (newSelected.has(fileId)) {
+      newSelected.delete(fileId);
+    } else {
+      newSelected.add(fileId);
+    }
+    setSelectedFiles(newSelected);
+  };
+
+  const selectAllFiles = () => {
+    if (selectedFiles.size === files.length) {
+      setSelectedFiles(new Set());
+    } else {
+      setSelectedFiles(new Set(files.map(f => f.id)));
+    }
+  };
+
+  const exitSelectionMode = () => {
+    setSelectionMode(false);
+    setSelectedFiles(new Set());
+  };
+
+  const deleteSelectedFiles = async () => {
+    if (selectedFiles.size === 0) return;
+    
+    const filesToDelete = Array.from(selectedFiles);
+    let deleted = 0;
+    
+    for (const fileId of filesToDelete) {
+      try {
+        const res = await fetch(`${API}/files/${fileId}`, { method: 'DELETE', headers });
+        if (res.ok) {
+          deleted++;
+        }
+      } catch (e) {
+        console.error(`Failed to delete file ${fileId}:`, e);
+      }
+    }
+    
+    toast.success(`Deleted ${deleted} file(s)`);
+    setShowDeleteSelectedConfirm(false);
+    setSelectedFiles(new Set());
+    setSelectionMode(false);
+    fetchContent();
+    onStatsChange?.();
+  };
+
+  const downloadFiles = async (filesToDownload) => {
+    if (filesToDownload.length === 0) return;
+    
+    setIsDownloading(true);
+    setDownloadProgress({ current: 0, total: filesToDownload.length });
+    
+    for (let i = 0; i < filesToDownload.length; i++) {
+      const file = filesToDownload[i];
+      setDownloadProgress({ current: i + 1, total: filesToDownload.length });
+      
+      try {
+        // Create download link
+        const link = document.createElement('a');
+        link.href = `${BACKEND_URL}/api/files/${file.id}/download`;
+        link.download = file.name;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // Small delay between downloads to prevent browser blocking
+        if (i < filesToDownload.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
+      } catch (e) {
+        console.error(`Failed to download ${file.name}:`, e);
+      }
+    }
+    
+    setIsDownloading(false);
+    setDownloadProgress({ current: 0, total: 0 });
+    toast.success(`Downloaded ${filesToDownload.length} file(s)`);
+  };
+
+  const downloadAllFiles = () => {
+    downloadFiles(files);
+  };
+
+  const downloadSelectedFiles = () => {
+    const filesToDownload = files.filter(f => selectedFiles.has(f.id));
+    downloadFiles(filesToDownload);
+  };
+
   const onDrop = useCallback(async (acceptedFiles) => {
     if (!currentFolderId) {
       toast.error('Please select a folder first');
