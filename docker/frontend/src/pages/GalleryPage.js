@@ -610,7 +610,28 @@ export default function GalleryPage() {
               <ImageIcon className="w-8 h-8 text-gray-400" />
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">No content yet</h3>
-            <p className="text-gray-500">Photos and videos will appear here soon.</p>
+            <p className="text-gray-500 mb-6">Photos and videos will appear here soon.</p>
+            {canEdit && (
+              <>
+                <Button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="bg-[#ad946d] hover:bg-[#96805d] text-white"
+                  data-testid="empty-upload-btn"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  {uploading ? 'Uploading...' : 'Upload Photos & Videos'}
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*,video/*"
+                  onChange={handleUpload}
+                  className="hidden"
+                />
+              </>
+            )}
           </div>
         )}
       </div>
