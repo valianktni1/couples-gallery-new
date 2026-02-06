@@ -738,6 +738,55 @@ async def get_gallery_path(token: str, folder_id: str):
     
     return path
 
+# ==================== PUBLIC UPLOAD ====================
+
+@api_router.post("/gallery/{token}/upload")
+async def public_upload(token: str, folder_id: str = Form(...), file: UploadFile = File(...)):
+    """Allow guests to upload files via share link (edit/full permission)"""
+    share = await db.shares.find_one({'token': token}, {'_id': 0})
+    if not share:
+        raise HTTPException(status_code=404, detail="Gallery not found")
+    
+    if share['permission'] not in ['edit', 'full']:
+        raise HTTPException(status_code=403, detail="Upload not allowed")
+    
+    # Verify folder is within share
+    if not await is_folder_in_share(folder_id, share['folder_id']):
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Save file
+    file_ext = Path(file.filename).suffix.lower()
+    stored_name = f"{uuid.uuid4()}{file_ext}"
+    file_path = FILES_DIR / stored_name
+    
+    async with aiofiles.open(file_path, 'wb') as f:
+        while chunk := await file.read(1024 * 1024):
+            await f.write(chunk)
+    
+    file_size = file_path.stat().st_size
+    file_type = 'image' if file_ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp'] else 'video' if file_ext in ['.mp4', '.mov', '.avi', '.mkv'] else 'other'
+    
+    file_doc = {
+        'id': str(uuid.uuid4()),
+        'name': file.filename,
+        'folder_id': folder_id,
+        'stored_name': stored_name,
+        'file_type': file_type,
+        'size': file_size,
+        'created_at': datetime.now(timezone.utc).isoformat()
+    }
+    await db.files.insert_one(file_doc)
+    
+    # Generate thumbnail for images
+    if file_type == 'image':
+        try:
+            await generate_thumbnail(file_path, file_doc['id'])
+            await generate_preview(file_path, file_doc['id'])
+        except Exception as e:
+            logger.error(f"Thumbnail generation failed: {e}")
+    
+    return {'id': file_doc['id'], 'name': file_doc['name'], 'message': 'Upload successful'}
+
 # ==================== PUBLIC ZIP DOWNLOAD ====================
 
 @api_router.get("/gallery/{token}/download-zip")
