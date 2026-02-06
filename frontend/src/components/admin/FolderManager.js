@@ -565,23 +565,88 @@ export default function FolderManager({ onStatsChange }) {
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-medium text-gray-400">Files ({files.length})</h2>
-            {files.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  // Download all files by opening each in new tab
-                  files.forEach(file => {
-                    window.open(`${BACKEND_URL}/api/files/${file.id}/download`, '_blank');
-                  });
-                }}
-                className="border-[#333] text-gray-300 hover:bg-[#252525] text-xs"
-                data-testid="download-all-btn"
-              >
-                <Download className="w-3 h-3 mr-1" />
-                Download All
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {/* Selection Mode Toggle */}
+              {!selectionMode ? (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectionMode(true)}
+                    className="border-[#333] text-gray-300 hover:bg-[#252525] text-xs"
+                    data-testid="select-mode-btn"
+                  >
+                    <CheckSquare className="w-3 h-3 mr-1" />
+                    Select
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={downloadAllFiles}
+                    disabled={isDownloading}
+                    className="border-[#333] text-gray-300 hover:bg-[#252525] text-xs"
+                    data-testid="download-all-btn"
+                  >
+                    <Download className="w-3 h-3 mr-1" />
+                    Download All
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={selectAllFiles}
+                    className="border-[#333] text-gray-300 hover:bg-[#252525] text-xs"
+                    data-testid="select-all-btn"
+                  >
+                    {selectedFiles.size === files.length ? (
+                      <>
+                        <Square className="w-3 h-3 mr-1" />
+                        Deselect All
+                      </>
+                    ) : (
+                      <>
+                        <CheckSquare className="w-3 h-3 mr-1" />
+                        Select All ({files.length})
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={downloadSelectedFiles}
+                    disabled={selectedFiles.size === 0 || isDownloading}
+                    className="border-[#333] text-gray-300 hover:bg-[#252525] text-xs"
+                    data-testid="download-selected-btn"
+                  >
+                    <Download className="w-3 h-3 mr-1" />
+                    Download ({selectedFiles.size})
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowDeleteSelectedConfirm(true)}
+                    disabled={selectedFiles.size === 0}
+                    className="border-red-500/30 text-red-400 hover:bg-red-500/10 text-xs"
+                    data-testid="delete-selected-btn"
+                  >
+                    <Trash2 className="w-3 h-3 mr-1" />
+                    Delete ({selectedFiles.size})
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={exitSelectionMode}
+                    className="text-gray-400 hover:text-white text-xs"
+                    data-testid="exit-select-btn"
+                  >
+                    <XCircle className="w-3 h-3 mr-1" />
+                    Cancel
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
           <div className="file-grid">
             <AnimatePresence>
@@ -592,13 +657,37 @@ export default function FolderManager({ onStatsChange }) {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: index * 0.02 }}
-                  className="group bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] overflow-hidden hover:border-[#3a3a3a] transition-colors"
+                  className={`group bg-[#1a1a1a] rounded-lg border overflow-hidden transition-colors ${
+                    selectedFiles.has(file.id) 
+                      ? 'border-[#ad946d] ring-2 ring-[#ad946d]/30' 
+                      : 'border-[#2a2a2a] hover:border-[#3a3a3a]'
+                  }`}
+                  onClick={() => selectionMode && toggleSelectFile(file.id)}
                   data-testid={`file-${file.id}`}
                 >
+                  {/* Selection checkbox overlay */}
+                  {selectionMode && (
+                    <div className="absolute top-2 left-2 z-10">
+                      <div 
+                        className={`w-6 h-6 rounded flex items-center justify-center ${
+                          selectedFiles.has(file.id) 
+                            ? 'bg-[#ad946d] text-white' 
+                            : 'bg-black/50 text-white border border-white/30'
+                        }`}
+                      >
+                        {selectedFiles.has(file.id) && <Check className="w-4 h-4" />}
+                      </div>
+                    </div>
+                  )}
+                  
                   {file.file_type === 'image' ? (
                     <div 
                       className="aspect-square bg-[#252525] relative cursor-pointer"
-                      onClick={() => setPreviewFile(file)}
+                      onClick={(e) => {
+                        if (!selectionMode) {
+                          setPreviewFile(file);
+                        }
+                      }}
                     >
                       <img
                         src={`${BACKEND_URL}${file.thumbnail_url}`}
@@ -611,50 +700,54 @@ export default function FolderManager({ onStatsChange }) {
                           e.target.parentElement.innerHTML = '<span class="text-gray-500">Loading...</span>';
                         }}
                       />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setPreviewFile(file); }}
-                          className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full backdrop-blur-sm"
-                          data-testid={`preview-${file.id}`}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <a
-                          href={`${BACKEND_URL}/api/files/${file.id}/download`}
-                          download
-                          onClick={(e) => e.stopPropagation()}
-                          className="bg-[#ad946d]/80 hover:bg-[#ad946d] text-white p-2 rounded-full backdrop-blur-sm"
-                          data-testid={`download-${file.id}`}
-                        >
-                          <Download className="w-4 h-4" />
-                        </a>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: file.id, name: file.name, type: 'file' }); }}
-                          className="bg-red-500/50 hover:bg-red-500/70 text-white p-2 rounded-full backdrop-blur-sm"
-                          data-testid={`delete-file-${file.id}`}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                      {!selectionMode && (
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setPreviewFile(file); }}
+                            className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full backdrop-blur-sm"
+                            data-testid={`preview-${file.id}`}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <a
+                            href={`${BACKEND_URL}/api/files/${file.id}/download`}
+                            download
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-[#ad946d]/80 hover:bg-[#ad946d] text-white p-2 rounded-full backdrop-blur-sm"
+                            data-testid={`download-${file.id}`}
+                          >
+                            <Download className="w-4 h-4" />
+                          </a>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: file.id, name: file.name, type: 'file' }); }}
+                            className="bg-red-500/50 hover:bg-red-500/70 text-white p-2 rounded-full backdrop-blur-sm"
+                            data-testid={`delete-file-${file.id}`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ) : file.file_type === 'video' ? (
                     <div className="aspect-square bg-[#252525] flex items-center justify-center relative">
                       <Film className="w-12 h-12 text-gray-500" />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                        <a
-                          href={`${BACKEND_URL}/api/files/${file.id}/download`}
-                          download
-                          className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full backdrop-blur-sm"
-                        >
-                          <FileIcon className="w-4 h-4" />
-                        </a>
-                        <button
-                          onClick={() => setDeleteTarget({ id: file.id, name: file.name, type: 'file' })}
-                          className="bg-red-500/50 hover:bg-red-500/70 text-white p-2 rounded-full backdrop-blur-sm"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                      {!selectionMode && (
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                          <a
+                            href={`${BACKEND_URL}/api/files/${file.id}/download`}
+                            download
+                            className="bg-white/20 hover:bg-white/30 text-white p-2 rounded-full backdrop-blur-sm"
+                          >
+                            <FileIcon className="w-4 h-4" />
+                          </a>
+                          <button
+                            onClick={() => setDeleteTarget({ id: file.id, name: file.name, type: 'file' })}
+                            className="bg-red-500/50 hover:bg-red-500/70 text-white p-2 rounded-full backdrop-blur-sm"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="aspect-square bg-[#252525] flex items-center justify-center">
