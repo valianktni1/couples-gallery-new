@@ -3,7 +3,7 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   FolderOpen, Share2, LayoutDashboard, LogOut,
-  ChevronRight, Plus, Upload, Settings, Users
+  ChevronRight, Plus, Upload, Settings, Users, Activity
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
