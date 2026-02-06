@@ -773,6 +773,21 @@ async def get_stats(admin = Depends(get_current_admin)):
         'total_size': total_size
     }
 
+# ==================== ACTIVITY LOGS ROUTES ====================
+
+@api_router.get("/activity-logs")
+async def get_activity_logs(admin = Depends(get_current_admin), limit: int = 100, skip: int = 0):
+    """Get activity logs for admin"""
+    logs = await db.activity_logs.find({}, {'_id': 0}).sort('created_at', -1).skip(skip).limit(limit).to_list(limit)
+    total = await db.activity_logs.count_documents({})
+    return {"logs": logs, "total": total}
+
+@api_router.delete("/activity-logs")
+async def clear_activity_logs(admin = Depends(get_current_admin)):
+    """Clear all activity logs"""
+    result = await db.activity_logs.delete_many({})
+    return {"deleted": result.deleted_count}
+
 # ==================== ROOT ROUTE ====================
 
 @api_router.get("/")
