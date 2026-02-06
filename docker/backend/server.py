@@ -1,6 +1,7 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form, Query
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form, Query, BackgroundTasks
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import FileResponse as FastAPIFileResponse, StreamingResponse
+from starlette.background import BackgroundTask
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -394,6 +395,76 @@ async def get_preview(file_id: str):
     if not preview_path.exists():
         raise HTTPException(status_code=404, detail="Preview not found")
     return FastAPIFileResponse(preview_path, media_type="image/jpeg")
+
+@api_router.get("/folders/{folder_id}/download-zip")
+async def download_folder_as_zip(folder_id: str, admin = Depends(get_current_admin)):
+    """Download all files in a folder as a ZIP archive"""
+    import zipfile
+    import tempfile
+    
+    folder = await db.folders.find_one({'id': folder_id}, {'_id': 0})
+    if not folder:
+        raise HTTPException(status_code=404, detail="Folder not found")
+    
+    files = await db.files.find({'folder_id': folder_id}, {'_id': 0}).to_list(10000)
+    if not files:
+        raise HTTPException(status_code=404, detail="No files in folder")
+    
+    # Create temporary zip file
+    temp_zip = tempfile.NamedTemporaryFile(delete=False, suffix='.zip')
+    
+    try:
+        with zipfile.ZipFile(temp_zip.name, 'w', zipfile.ZIP_DEFLATED) as zf:
+            for file_doc in files:
+                file_path = FILES_DIR / file_doc['stored_name']
+                if file_path.exists():
+                    # Add file to zip with original name
+                    zf.write(file_path, file_doc['name'])
+        
+        # Return the zip file
+        zip_filename = f"{folder['name']}.zip"
+        return FastAPIFileResponse(
+            temp_zip.name, 
+            filename=zip_filename,
+            media_type='application/zip',
+            background=BackgroundTask(lambda: Path(temp_zip.name).unlink(missing_ok=True))
+        )
+    except Exception as e:
+        Path(temp_zip.name).unlink(missing_ok=True)
+        logger.error(f"ZIP creation failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create ZIP file")
+
+@api_router.post("/files/download-zip")
+async def download_files_as_zip(file_ids: List[str], admin = Depends(get_current_admin)):
+    """Download selected files as a ZIP archive"""
+    import zipfile
+    import tempfile
+    
+    if not file_ids:
+        raise HTTPException(status_code=400, detail="No files selected")
+    
+    # Create temporary zip file
+    temp_zip = tempfile.NamedTemporaryFile(delete=False, suffix='.zip')
+    
+    try:
+        with zipfile.ZipFile(temp_zip.name, 'w', zipfile.ZIP_DEFLATED) as zf:
+            for file_id in file_ids:
+                file_doc = await db.files.find_one({'id': file_id}, {'_id': 0})
+                if file_doc:
+                    file_path = FILES_DIR / file_doc['stored_name']
+                    if file_path.exists():
+                        zf.write(file_path, file_doc['name'])
+        
+        return FastAPIFileResponse(
+            temp_zip.name, 
+            filename='selected_files.zip',
+            media_type='application/zip',
+            background=BackgroundTask(lambda: Path(temp_zip.name).unlink(missing_ok=True))
+        )
+    except Exception as e:
+        Path(temp_zip.name).unlink(missing_ok=True)
+        logger.error(f"ZIP creation failed: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create ZIP file")
 
 @api_router.get("/files/{file_id}/download")
 async def download_file(file_id: str):

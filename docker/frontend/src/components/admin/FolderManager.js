@@ -75,7 +75,6 @@ export default function FolderManager({ onStatsChange }) {
   const [selectedFiles, setSelectedFiles] = useState(new Set());
   const [showDeleteSelectedConfirm, setShowDeleteSelectedConfirm] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [downloadProgress, setDownloadProgress] = useState({ current: 0, total: 0 });
 
   const headers = { Authorization: `Bearer ${token}` };
 
@@ -251,42 +250,78 @@ export default function FolderManager({ onStatsChange }) {
     onStatsChange?.();
   };
 
-  const downloadFiles = async (filesToDownload) => {
-    if (filesToDownload.length === 0) return;
+  // Download all files as ZIP
+  const downloadAllAsZip = async () => {
+    if (!currentFolderId || files.length === 0) return;
     
     setIsDownloading(true);
-    setDownloadProgress({ current: 0, total: filesToDownload.length });
+    toast.info('Preparing ZIP file...');
     
-    for (let i = 0; i < filesToDownload.length; i++) {
-      const file = filesToDownload[i];
-      setDownloadProgress({ current: i + 1, total: filesToDownload.length });
+    try {
+      const link = document.createElement('a');
+      link.href = `${BACKEND_URL}/api/folders/${currentFolderId}/download-zip`;
+      link.download = 'gallery.zip';
       
-      try {
-        // Create download link
-        const link = document.createElement('a');
-        link.href = `${BACKEND_URL}/api/files/${file.id}/download`;
-        link.download = file.name;
-        link.target = '_blank';
+      // Add auth header via fetch and blob
+      const res = await fetch(`${API}/folders/${currentFolderId}/download-zip`, { headers });
+      
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        link.href = url;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
-        // Small delay between downloads to prevent browser blocking
-        if (i < filesToDownload.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 300));
-        }
-      } catch (e) {
-        console.error(`Failed to download ${file.name}:`, e);
+        window.URL.revokeObjectURL(url);
+        toast.success('ZIP download started!');
+      } else {
+        const error = await res.json();
+        toast.error(error.detail || 'Failed to create ZIP');
       }
+    } catch (e) {
+      console.error('ZIP download failed:', e);
+      toast.error('Failed to download ZIP');
+    } finally {
+      setIsDownloading(false);
     }
-    
-    setIsDownloading(false);
-    setDownloadProgress({ current: 0, total: 0 });
-    toast.success(`Downloaded ${filesToDownload.length} file(s)`);
   };
 
-  const downloadAllFiles = () => {
-    downloadFiles(files);
+  // Download selected files as ZIP
+  const downloadSelectedAsZip = async () => {
+    if (selectedFiles.size === 0) return;
+    
+    setIsDownloading(true);
+    toast.info('Preparing ZIP file...');
+    
+    try {
+      const fileIds = Array.from(selectedFiles);
+      const res = await fetch(`${API}/files/download-zip`, {
+        method: 'POST',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify(fileIds)
+      });
+      
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'selected_files.zip';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        toast.success('ZIP download started!');
+      } else {
+        const error = await res.json();
+        toast.error(error.detail || 'Failed to create ZIP');
+      }
+    } catch (e) {
+      console.error('ZIP download failed:', e);
+      toast.error('Failed to download ZIP');
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const downloadSelectedFiles = () => {
@@ -477,21 +512,6 @@ export default function FolderManager({ onStatsChange }) {
         </div>
       )}
 
-      {/* Download Progress */}
-      {isDownloading && (
-        <div className="bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] p-4 mb-6" data-testid="download-progress">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-white">
-              Downloading... ({downloadProgress.current}/{downloadProgress.total})
-            </h3>
-          </div>
-          <Progress 
-            value={(downloadProgress.current / downloadProgress.total) * 100} 
-            className="h-2" 
-          />
-        </div>
-      )}
-
       {/* Folders Grid */}
       {folders.length > 0 && (
         <section className="mb-8">
@@ -581,13 +601,13 @@ export default function FolderManager({ onStatsChange }) {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={downloadAllFiles}
+                    onClick={downloadAllAsZip}
                     disabled={isDownloading}
                     className="border-[#333] text-gray-300 hover:bg-[#252525] text-xs"
                     data-testid="download-all-btn"
                   >
                     <Download className="w-3 h-3 mr-1" />
-                    Download All
+                    Download All (ZIP)
                   </Button>
                 </>
               ) : (
@@ -614,13 +634,13 @@ export default function FolderManager({ onStatsChange }) {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={downloadSelectedFiles}
+                    onClick={downloadSelectedAsZip}
                     disabled={selectedFiles.size === 0 || isDownloading}
                     className="border-[#333] text-gray-300 hover:bg-[#252525] text-xs"
                     data-testid="download-selected-btn"
                   >
                     <Download className="w-3 h-3 mr-1" />
-                    Download ({selectedFiles.size})
+                    Download ZIP ({selectedFiles.size})
                   </Button>
                   <Button
                     variant="outline"
