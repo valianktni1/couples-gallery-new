@@ -406,35 +406,37 @@ export default function GalleryPage() {
                       Download All
                     </Button>
                     {canEdit && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={enterFavouritesMode}
-                        className="border-[#ad946d] text-[#ad946d] hover:bg-[#ad946d]/10"
-                        data-testid="select-favourites-btn"
-                      >
-                        <Heart className="w-4 h-4 mr-1" />
-                        Select Album Favourites
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={uploading}
-                        className="border-[#ad946d] text-[#ad946d] hover:bg-[#ad946d]/10"
-                        data-testid="upload-btn"
-                      >
-                        <Upload className="w-4 h-4 mr-1" />
-                        {uploading ? 'Uploading...' : 'Upload Photos'}
-                      </Button>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        multiple
-                        accept="image/*,video/*"
-                        onChange={handleUpload}
-                        className="hidden"
-                      />
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={enterFavouritesMode}
+                          className="border-[#ad946d] text-[#ad946d] hover:bg-[#ad946d]/10"
+                          data-testid="select-favourites-btn"
+                        >
+                          <Heart className="w-4 h-4 mr-1" />
+                          Select Album Favourites
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploading}
+                          className="border-[#ad946d] text-[#ad946d] hover:bg-[#ad946d]/10"
+                          data-testid="upload-btn"
+                        >
+                          <Upload className="w-4 h-4 mr-1" />
+                          {uploading ? 'Uploading...' : 'Upload Photos'}
+                        </Button>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          multiple
+                          accept="image/*,video/*"
+                          onChange={handleUpload}
+                          className="hidden"
+                        />
+                      </>
                     )}
                   </>
                 ) : (
