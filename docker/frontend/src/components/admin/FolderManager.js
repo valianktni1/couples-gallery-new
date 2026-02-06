@@ -177,6 +177,25 @@ export default function FolderManager({ onStatsChange }) {
     }
   };
 
+  const duplicateFolder = async (folderId) => {
+    try {
+      const res = await fetch(`${API}/folders/${folderId}/duplicate`, {
+        method: 'POST',
+        headers
+      });
+      
+      if (res.ok) {
+        toast.success('Folder duplicated! You can now rename it.');
+        fetchContent();
+      } else {
+        const error = await res.json();
+        toast.error(error.detail || 'Failed to duplicate folder');
+      }
+    } catch (e) {
+      toast.error('Failed to duplicate folder');
+    }
+  };
+
   const deleteItem = async () => {
     if (!deleteTarget) return;
     
