@@ -119,6 +119,20 @@ Build a self-hosted application for sharing photos and videos with wedding clien
 }
 ```
 
+### activity_logs (New - Feb 2026)
+```json
+{
+  "id": "uuid",
+  "action": "gallery_view|file_download|zip_download|file_upload",
+  "share_token": "string|null",
+  "folder_name": "string|null",
+  "file_name": "string|null",
+  "details": "object",
+  "ip_address": "string",
+  "created_at": "datetime"
+}
+```
+
 ---
 
 ## API Endpoints
