@@ -69,6 +69,14 @@ export default function FolderManager({ onStatsChange }) {
   // Upload
   const [uploadProgress, setUploadProgress] = useState({});
   const [isUploading, setIsUploading] = useState(false);
+  const [totalUploadProgress, setTotalUploadProgress] = useState({ current: 0, total: 0 });
+  
+  // Selection mode
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState(new Set());
+  const [showDeleteSelectedConfirm, setShowDeleteSelectedConfirm] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState({ current: 0, total: 0 });
 
   const headers = { Authorization: `Bearer ${token}` };
 
