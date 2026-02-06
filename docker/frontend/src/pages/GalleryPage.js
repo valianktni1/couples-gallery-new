@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 import {
-  FolderOpen, ChevronRight, Download, X,
-  Play, Image as ImageIcon, Film, ChevronLeft, ChevronRight as ChevronRightIcon
+  FolderOpen, ChevronRight, Download, X, Heart, Check,
+  Play, Image as ImageIcon, Film, ChevronLeft, ChevronRight as ChevronRightIcon,
+  CheckSquare, Square, Save
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -23,6 +25,12 @@ export default function GalleryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lightboxIndex, setLightboxIndex] = useState(null);
+  
+  // Selection state
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState(new Set());
+  const [favouritesMode, setFavouritesMode] = useState(false);
+  const [savingFavourites, setSavingFavourites] = useState(false);
 
   useEffect(() => {
     fetchGallery();
@@ -49,7 +57,6 @@ export default function GalleryPage() {
 
   const fetchContent = async () => {
     try {
-      // Fetch folders
       const foldersUrl = currentFolderId 
         ? `${API}/gallery/${token}/folders?parent_id=${currentFolderId}`
         : `${API}/gallery/${token}/folders`;
@@ -58,7 +65,6 @@ export default function GalleryPage() {
         setFolders(await foldersRes.json());
       }
 
-      // Fetch files
       const filesUrl = currentFolderId
         ? `${API}/gallery/${token}/files?folder_id=${currentFolderId}`
         : `${API}/gallery/${token}/files`;
@@ -67,7 +73,6 @@ export default function GalleryPage() {
         setFiles(await filesRes.json());
       }
 
-      // Fetch path if in subfolder
       if (currentFolderId) {
         const pathRes = await fetch(`${API}/gallery/${token}/path?folder_id=${currentFolderId}`);
         if (pathRes.ok) {
@@ -87,12 +92,126 @@ export default function GalleryPage() {
     } else {
       setSearchParams({});
     }
+    // Reset selection when navigating
+    setSelectionMode(false);
+    setFavouritesMode(false);
+    setSelectedFiles(new Set());
+  };
+
+  // Selection functions
+  const toggleSelectFile = (fileId) => {
+    const newSelected = new Set(selectedFiles);
+    if (newSelected.has(fileId)) {
+      newSelected.delete(fileId);
+    } else {
+      newSelected.add(fileId);
+    }
+    setSelectedFiles(newSelected);
+  };
+
+  const selectAllFiles = () => {
+    const imageFiles = files.filter(f => f.file_type === 'image');
+    if (selectedFiles.size === imageFiles.length) {
+      setSelectedFiles(new Set());
+    } else {
+      setSelectedFiles(new Set(imageFiles.map(f => f.id)));
+    }
+  };
+
+  const exitSelectionMode = () => {
+    setSelectionMode(false);
+    setFavouritesMode(false);
+    setSelectedFiles(new Set());
+  };
+
+  const enterFavouritesMode = () => {
+    setFavouritesMode(true);
+    setSelectionMode(true);
+    setSelectedFiles(new Set());
+    toast.info('Select your favourite photos, then click "Save Album Favourites"');
+  };
+
+  const saveFavourites = async () => {
+    if (selectedFiles.size === 0) {
+      toast.error('Please select at least one photo');
+      return;
+    }
+
+    setSavingFavourites(true);
+    try {
+      const res = await fetch(`${API}/gallery/${token}/favourites`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_ids: Array.from(selectedFiles) })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        toast.success(`${selectedFiles.size} favourites saved to Album Favourites!`);
+        exitSelectionMode();
+        fetchContent(); // Refresh to show new folder
+      } else {
+        const error = await res.json();
+        toast.error(error.detail || 'Failed to save favourites');
+      }
+    } catch (e) {
+      console.error('Failed to save favourites:', e);
+      toast.error('Failed to save favourites');
+    } finally {
+      setSavingFavourites(false);
+    }
+  };
+
+  // Download all files
+  const downloadAllFiles = () => {
+    const imageFiles = files.filter(f => f.file_type === 'image');
+    if (imageFiles.length === 0) {
+      toast.error('No photos to download');
+      return;
+    }
+    
+    toast.info(`Starting download of ${imageFiles.length} photos...`);
+    imageFiles.forEach((file, i) => {
+      setTimeout(() => {
+        const link = document.createElement('a');
+        link.href = `${BACKEND_URL}/api/files/${file.id}/download`;
+        link.download = file.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }, i * 500);
+    });
+  };
+
+  // Download selected files
+  const downloadSelectedFiles = () => {
+    if (selectedFiles.size === 0) {
+      toast.error('No photos selected');
+      return;
+    }
+    
+    toast.info(`Starting download of ${selectedFiles.size} photos...`);
+    const selected = files.filter(f => selectedFiles.has(f.id));
+    selected.forEach((file, i) => {
+      setTimeout(() => {
+        const link = document.createElement('a');
+        link.href = `${BACKEND_URL}/api/files/${file.id}/download`;
+        link.download = file.name;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }, i * 500);
+    });
   };
 
   const imageFiles = files.filter(f => f.file_type === 'image');
   const videoFiles = files.filter(f => f.file_type === 'video');
 
-  const openLightbox = (index) => setLightboxIndex(index);
+  const openLightbox = (index) => {
+    if (!selectionMode) {
+      setLightboxIndex(index);
+    }
+  };
   const closeLightbox = () => setLightboxIndex(null);
   
   const nextImage = () => {
@@ -106,6 +225,9 @@ export default function GalleryPage() {
       setLightboxIndex(lightboxIndex - 1);
     }
   };
+
+  // Check if user has edit or full permission
+  const canEdit = gallery?.permission === 'edit' || gallery?.permission === 'full';
 
   if (loading) {
     return (
@@ -233,10 +355,121 @@ export default function GalleryPage() {
         {/* Images */}
         {imageFiles.length > 0 && (
           <section className="mb-12">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <ImageIcon className="w-5 h-5 text-[#ad946d]" />
-              Photos ({imageFiles.length})
-            </h2>
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <ImageIcon className="w-5 h-5 text-[#ad946d]" />
+                Photos ({imageFiles.length})
+              </h2>
+              
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center gap-2">
+                {!selectionMode ? (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectionMode(true)}
+                      className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                      data-testid="select-btn"
+                    >
+                      <CheckSquare className="w-4 h-4 mr-1" />
+                      Select
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={downloadAllFiles}
+                      className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                      data-testid="download-all-btn"
+                    >
+                      <Download className="w-4 h-4 mr-1" />
+                      Download All
+                    </Button>
+                    {canEdit && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={enterFavouritesMode}
+                        className="border-[#ad946d] text-[#ad946d] hover:bg-[#ad946d]/10"
+                        data-testid="select-favourites-btn"
+                      >
+                        <Heart className="w-4 h-4 mr-1" />
+                        Select Album Favourites
+                      </Button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={selectAllFiles}
+                      className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                      data-testid="select-all-btn"
+                    >
+                      {selectedFiles.size === imageFiles.length ? (
+                        <>
+                          <Square className="w-4 h-4 mr-1" />
+                          Deselect All
+                        </>
+                      ) : (
+                        <>
+                          <CheckSquare className="w-4 h-4 mr-1" />
+                          Select All ({imageFiles.length})
+                        </>
+                      )}
+                    </Button>
+                    
+                    {favouritesMode ? (
+                      <Button
+                        size="sm"
+                        onClick={saveFavourites}
+                        disabled={savingFavourites || selectedFiles.size === 0}
+                        className="bg-[#ad946d] hover:bg-[#96805d] text-white"
+                        data-testid="save-favourites-btn"
+                      >
+                        <Save className="w-4 h-4 mr-1" />
+                        {savingFavourites ? 'Saving...' : `Save Album Favourites (${selectedFiles.size})`}
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={downloadSelectedFiles}
+                        disabled={selectedFiles.size === 0}
+                        className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                        data-testid="download-selected-btn"
+                      >
+                        <Download className="w-4 h-4 mr-1" />
+                        Download ({selectedFiles.size})
+                      </Button>
+                    )}
+                    
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={exitSelectionMode}
+                      className="text-gray-500 hover:text-gray-700"
+                      data-testid="cancel-select-btn"
+                    >
+                      <X className="w-4 h-4 mr-1" />
+                      Cancel
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Selection mode banner */}
+            {favouritesMode && (
+              <div className="bg-[#ad946d]/10 border border-[#ad946d]/30 rounded-lg p-3 mb-4 flex items-center gap-2">
+                <Heart className="w-5 h-5 text-[#ad946d]" />
+                <span className="text-sm text-[#ad946d]">
+                  Tap photos to select your favourites, then click "Save Album Favourites"
+                </span>
+              </div>
+            )}
+
             <div className="gallery-grid">
               {imageFiles.map((file, index) => (
                 <motion.div
@@ -244,8 +477,10 @@ export default function GalleryPage() {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: index * 0.03 }}
-                  className="image-card cursor-pointer group"
-                  onClick={() => openLightbox(index)}
+                  className={`image-card cursor-pointer group relative ${
+                    selectedFiles.has(file.id) ? 'ring-4 ring-[#ad946d]' : ''
+                  }`}
+                  onClick={() => selectionMode ? toggleSelectFile(file.id) : openLightbox(index)}
                   data-testid={`image-${file.id}`}
                 >
                   <img
@@ -253,9 +488,32 @@ export default function GalleryPage() {
                     alt={file.name}
                     loading="lazy"
                   />
-                  <div className="overlay flex items-end p-4">
-                    <span className="text-white text-sm truncate">{file.name}</span>
-                  </div>
+                  
+                  {/* Selection checkbox */}
+                  {selectionMode && (
+                    <div className="absolute top-2 left-2 z-10">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                        selectedFiles.has(file.id) 
+                          ? 'bg-[#ad946d] text-white' 
+                          : 'bg-white/80 text-gray-400 border-2 border-gray-300'
+                      }`}>
+                        {selectedFiles.has(file.id) && <Check className="w-5 h-5" />}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Favourite heart indicator */}
+                  {favouritesMode && selectedFiles.has(file.id) && (
+                    <div className="absolute top-2 right-2 z-10">
+                      <Heart className="w-6 h-6 text-[#ad946d] fill-[#ad946d]" />
+                    </div>
+                  )}
+                  
+                  {!selectionMode && (
+                    <div className="overlay flex items-end p-4">
+                      <span className="text-white text-sm truncate">{file.name}</span>
+                    </div>
+                  )}
                 </motion.div>
               ))}
             </div>
