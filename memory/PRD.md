@@ -126,13 +126,15 @@ Build a self-hosted application for sharing photos and videos with wedding clien
 - `GET /api/folders/{id}/path` - Get breadcrumb path
 
 ### Files
-- `POST /api/files/upload` - Upload file
+- `POST /api/files/upload` - Upload file (supports up to 25GB)
 - `GET /api/files` - List files in folder
 - `GET /api/files/{id}/thumbnail` - Get thumbnail
 - `GET /api/files/{id}/preview` - Get preview
 - `GET /api/files/{id}/download` - Download file
 - `GET /api/files/{id}/stream` - Stream video
 - `DELETE /api/files/{id}` - Delete file
+- `POST /api/files/download-zip` - Download selected files as ZIP
+- `GET /api/folders/{id}/download-zip` - Download folder contents as ZIP
 
 ### Shares
 - `GET /api/shares` - List all shares
