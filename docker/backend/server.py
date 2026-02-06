@@ -710,7 +710,7 @@ async def get_share_qrcode(share_id: str, admin = Depends(get_current_admin)):
 # ==================== PUBLIC GALLERY ROUTES ====================
 
 @api_router.get("/gallery/{token}")
-async def get_gallery_by_token(token: str, request: Request = None):
+async def get_gallery_by_token(token: str, request: Request):
     share = await db.shares.find_one({'token': token}, {'_id': 0})
     if not share:
         raise HTTPException(status_code=404, detail="Gallery not found")
@@ -720,7 +720,7 @@ async def get_gallery_by_token(token: str, request: Request = None):
         raise HTTPException(status_code=404, detail="Gallery not found")
     
     # Log gallery view
-    ip = request.client.host if request else None
+    ip = request.headers.get('X-Forwarded-For', request.client.host if request.client else 'unknown')
     await log_activity('gallery_view', share_token=token, folder_name=folder['name'], ip_address=ip)
     
     return {
