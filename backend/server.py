@@ -140,6 +140,22 @@ async def get_current_admin(credentials: HTTPAuthorizationCredentials = Depends(
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+# ==================== ACTIVITY LOGGING ====================
+
+async def log_activity(action: str, share_token: str = None, folder_name: str = None, file_name: str = None, details: dict = None, ip_address: str = None):
+    """Log client activity for tracking"""
+    log_entry = {
+        'id': str(uuid.uuid4()),
+        'action': action,
+        'share_token': share_token,
+        'folder_name': folder_name,
+        'file_name': file_name,
+        'details': details or {},
+        'ip_address': ip_address,
+        'created_at': datetime.now(timezone.utc).isoformat()
+    }
+    await db.activity_logs.insert_one(log_entry)
+
 # ==================== IMAGE PROCESSING ====================
 
 async def generate_thumbnail(file_path: Path, file_id: str) -> Optional[str]:
