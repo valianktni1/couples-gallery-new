@@ -617,13 +617,13 @@ export default function FolderManager({ onStatsChange }) {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={downloadAllFiles}
+                    onClick={downloadAllAsZip}
                     disabled={isDownloading}
                     className="border-[#333] text-gray-300 hover:bg-[#252525] text-xs"
                     data-testid="download-all-btn"
                   >
                     <Download className="w-3 h-3 mr-1" />
-                    Download All
+                    Download All (ZIP)
                   </Button>
                 </>
               ) : (
@@ -650,13 +650,13 @@ export default function FolderManager({ onStatsChange }) {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={downloadSelectedFiles}
+                    onClick={downloadSelectedAsZip}
                     disabled={selectedFiles.size === 0 || isDownloading}
                     className="border-[#333] text-gray-300 hover:bg-[#252525] text-xs"
                     data-testid="download-selected-btn"
                   >
                     <Download className="w-3 h-3 mr-1" />
-                    Download ({selectedFiles.size})
+                    Download ZIP ({selectedFiles.size})
                   </Button>
                   <Button
                     variant="outline"
