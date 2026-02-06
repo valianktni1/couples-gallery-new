@@ -47,6 +47,21 @@ JWT_EXPIRATION_HOURS = 24
 # Domain for share links
 SHARE_DOMAIN = os.environ.get('SHARE_DOMAIN', 'https://weddingsbymark.uk')
 
+# Activity logging helper
+async def log_activity(action: str, share_token: str = None, folder_name: str = None, file_name: str = None, details: dict = None, ip_address: str = None):
+    """Log client activity for tracking"""
+    log_entry = {
+        'id': str(uuid.uuid4()),
+        'action': action,  # 'gallery_view', 'file_download', 'zip_download', 'file_upload'
+        'share_token': share_token,
+        'folder_name': folder_name,
+        'file_name': file_name,
+        'details': details or {},
+        'ip_address': ip_address,
+        'created_at': datetime.now(timezone.utc).isoformat()
+    }
+    await db.activity_logs.insert_one(log_entry)
+
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
 security = HTTPBearer(auto_error=False)
