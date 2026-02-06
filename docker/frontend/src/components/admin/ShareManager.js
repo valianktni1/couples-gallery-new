@@ -80,8 +80,8 @@ export default function ShareManager() {
 
   const fetchFolders = async () => {
     try {
-      // Fetch all root folders for selection
-      const res = await fetch(`${API}/folders?parent_id=`, { headers });
+      // Fetch ALL folders (including subfolders) for selection
+      const res = await fetch(`${API}/folders/all`, { headers });
       if (res.ok) {
         setFolders(await res.json());
       }
