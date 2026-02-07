@@ -650,6 +650,20 @@ export default function GalleryPage() {
                     </div>
                   )}
                   
+                  {/* Order Print button */}
+                  {!selectionMode && printProducts.length > 0 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowProductSelector(file);
+                      }}
+                      className="absolute top-2 right-2 z-10 bg-[#ad946d] text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-[#9a8460]"
+                      title="Order Print"
+                    >
+                      <Printer className="w-4 h-4" />
+                    </button>
+                  )}
+                  
                   {!selectionMode && (
                     <div className="overlay flex items-end p-4">
                       <span className="text-white text-sm truncate">{file.name}</span>
