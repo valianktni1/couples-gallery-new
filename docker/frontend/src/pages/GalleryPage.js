@@ -447,12 +447,20 @@ export default function GalleryPage() {
       {/* Hero */}
       <div className="bg-gradient-to-b from-[#ad946d]/10 to-transparent py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 md:px-8 text-center">
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-[#ad946d] text-lg mb-2 font-medium"
+          >
+            Welcome
+          </motion.p>
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
             className="font-serif text-4xl md:text-5xl lg:text-6xl text-gray-900 mb-4 italic"
           >
-            {gallery?.folder_name}
+            {extractCoupleNames(gallery?.folder_name)}
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
