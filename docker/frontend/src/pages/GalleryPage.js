@@ -100,6 +100,70 @@ export default function GalleryPage() {
     }
   };
 
+  const fetchPrintProducts = async () => {
+    try {
+      const res = await fetch(`${API}/print-products?active_only=true`);
+      if (res.ok) {
+        const data = await res.json();
+        setPrintProducts(data.filter(p => p.price > 0));
+      }
+    } catch (e) {
+      console.error('Failed to fetch print products');
+    }
+    // Update cart count from localStorage
+    updateCartCount();
+  };
+
+  const updateCartCount = () => {
+    const saved = localStorage.getItem(`print_cart_${token}`);
+    if (saved) {
+      try {
+        const cart = JSON.parse(saved);
+        setCartCount(cart.reduce((sum, item) => sum + item.quantity, 0));
+      } catch (e) {
+        setCartCount(0);
+      }
+    }
+  };
+
+  const handleAddToCart = (file, product) => {
+    // Get current cart
+    const saved = localStorage.getItem(`print_cart_${token}`);
+    let cart = [];
+    if (saved) {
+      try {
+        cart = JSON.parse(saved);
+      } catch (e) {}
+    }
+
+    // Add item
+    const existingIndex = cart.findIndex(
+      item => item.file_id === file.id && item.product_id === product.id
+    );
+    
+    if (existingIndex >= 0) {
+      cart[existingIndex].quantity += 1;
+    } else {
+      cart.push({
+        file_id: file.id,
+        file_name: file.name,
+        file_thumbnail: file.thumbnail_url,
+        product_id: product.id,
+        product_name: product.name,
+        size: product.size,
+        paper_type: product.paper_type,
+        price: product.price,
+        quantity: 1
+      });
+    }
+
+    // Save cart
+    localStorage.setItem(`print_cart_${token}`, JSON.stringify(cart));
+    updateCartCount();
+    setShowProductSelector(null);
+    toast.success(`Added ${product.name} to cart`);
+  };
+
   const fetchContent = async () => {
     try {
       const foldersUrl = currentFolderId 
