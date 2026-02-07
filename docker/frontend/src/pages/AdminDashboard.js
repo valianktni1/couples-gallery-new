@@ -125,6 +125,8 @@ export default function AdminDashboard() {
           <Route index element={<DashboardHome stats={stats} onRefresh={fetchStats} />} />
           <Route path="folders/*" element={<FolderManager onStatsChange={fetchStats} />} />
           <Route path="shares" element={<ShareManager />} />
+          <Route path="orders" element={<OrdersManager />} />
+          <Route path="products" element={<ProductsManager />} />
           <Route path="activity" element={<ActivityLogs />} />
         </Routes>
       </main>
