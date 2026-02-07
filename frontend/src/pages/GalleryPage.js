@@ -890,10 +890,10 @@ export default function GalleryPage() {
             </div>
 
             {/* Controls */}
-            <div className="absolute top-4 right-4 flex items-center gap-2">
+            <div className="absolute top-4 right-4 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
               {/* Slideshow Play/Pause */}
               <button
-                onClick={toggleSlideshow}
+                onClick={(e) => { e.stopPropagation(); toggleSlideshow(); }}
                 className={`${slideshowPlaying ? 'bg-[#ad946d]' : 'bg-white/10'} hover:bg-[#ad946d]/80 text-white p-3 rounded-full backdrop-blur-sm transition-colors`}
                 data-testid="lightbox-slideshow"
                 title={slideshowPlaying ? "Pause Slideshow" : "Play Slideshow"}
@@ -902,7 +902,7 @@ export default function GalleryPage() {
               </button>
               {printProducts.length > 0 && !slideshowPlaying && (
                 <button
-                  onClick={() => setShowProductSelector(imageFiles[lightboxIndex])}
+                  onClick={(e) => { e.stopPropagation(); setShowProductSelector(imageFiles[lightboxIndex]); }}
                   className="bg-[#ad946d] hover:bg-[#9a8460] text-white p-3 rounded-full backdrop-blur-sm transition-colors"
                   data-testid="lightbox-order-print"
                   title="Order Print"
@@ -914,6 +914,7 @@ export default function GalleryPage() {
                 <a
                   href={`${BACKEND_URL}/api/files/${imageFiles[lightboxIndex].id}/download`}
                   download
+                  onClick={(e) => e.stopPropagation()}
                   className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-sm transition-colors"
                   data-testid="lightbox-download"
                 >
@@ -921,7 +922,7 @@ export default function GalleryPage() {
                 </a>
               )}
               <button
-                onClick={closeLightbox}
+                onClick={(e) => { e.stopPropagation(); closeLightbox(); }}
                 className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-sm transition-colors"
                 data-testid="lightbox-close"
               >
@@ -931,7 +932,7 @@ export default function GalleryPage() {
 
             {/* Slideshow indicator */}
             {slideshowPlaying && (
-              <div className="absolute top-4 left-4 bg-[#ad946d] text-white px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2">
+              <div className="absolute top-4 left-4 bg-[#ad946d] text-white px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                 <Play className="w-4 h-4" />
                 Slideshow Playing
               </div>
