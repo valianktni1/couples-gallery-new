@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { 
   Activity, Eye, Download, Upload, Archive, Trash2, RefreshCw,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, Search
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -49,18 +49,27 @@ export function ActivityLogs() {
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   
   const limit = 20;
   const headers = { Authorization: `Bearer ${token}` };
 
   useEffect(() => {
     fetchLogs();
-  }, [page]);
+  }, [page, searchTerm]);
 
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API}/activity-logs?limit=${limit}&skip=${page * limit}`, { headers });
+      const params = new URLSearchParams({
+        limit: limit.toString(),
+        skip: (page * limit).toString()
+      });
+      if (searchTerm.trim()) {
+        params.append('search', searchTerm.trim());
+      }
+      
+      const res = await fetch(`${API}/activity-logs?${params}`, { headers });
       if (res.ok) {
         const data = await res.json();
         setLogs(data.logs);
@@ -73,6 +82,11 @@ export function ActivityLogs() {
     }
   };
 
+  const handleSearch = (value) => {
+    setSearchTerm(value);
+    setPage(0); // Reset to first page when searching
+  };
+
   const clearLogs = async () => {
     try {
       const res = await fetch(`${API}/activity-logs`, { method: 'DELETE', headers });
@@ -81,6 +95,7 @@ export function ActivityLogs() {
         setLogs([]);
         setTotal(0);
         setPage(0);
+        setSearchTerm(''); // Reset search when clearing logs
       }
     } catch (e) {
       toast.error('Failed to clear logs');
@@ -132,6 +147,18 @@ export function ActivityLogs() {
             </Button>
           )}
         </div>
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+        <input
+          type="text"
+          placeholder="Search by folder name, share token, or file name..."
+          value={searchTerm}
+          onChange={(e) => handleSearch(e.target.value)}
+          className="w-full pl-10 pr-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#ad946d] focus:ring-1 focus:ring-[#ad946d]"
+        />
       </div>
 
       {/* Stats */}
