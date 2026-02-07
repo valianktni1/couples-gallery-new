@@ -427,9 +427,9 @@ export default function GalleryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] gallery-theme">
+    <div className="min-h-screen bg-[#FFE6A7] gallery-theme">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-gray-100">
+      <header className="sticky top-0 z-40 bg-[#FFE6A7]/90 backdrop-blur-xl border-b border-[#ad946d]/20">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="w-20"></div>
@@ -625,10 +625,9 @@ export default function GalleryPage() {
                       </Button>
                     )}
                     <Button
-                      variant="outline"
                       size="sm"
                       onClick={downloadAllFiles}
-                      className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                      className="bg-[#ad946d] hover:bg-[#9a8460] text-white shadow-md"
                       data-testid="download-all-btn"
                     >
                       <Download className="w-4 h-4 mr-1" />
