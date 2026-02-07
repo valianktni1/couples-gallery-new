@@ -159,8 +159,10 @@ export function ProductsManager() {
   }, {});
 
   const paperTypeLabels = {
+    matte: 'Matte Prints',
+    lustre: 'Lustre Prints',
+    silk: 'Silk Prints',
     gloss: 'Gloss Prints',
-    luster: 'Luster Prints',
     canvas: 'Canvas',
     other: 'Other'
   };
