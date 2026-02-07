@@ -793,6 +793,16 @@ export default function GalleryPage() {
 
             {/* Controls */}
             <div className="absolute top-4 right-4 flex items-center gap-2">
+              {printProducts.length > 0 && (
+                <button
+                  onClick={() => setShowProductSelector(imageFiles[lightboxIndex])}
+                  className="bg-[#ad946d] hover:bg-[#9a8460] text-white p-3 rounded-full backdrop-blur-sm transition-colors"
+                  data-testid="lightbox-order-print"
+                  title="Order Print"
+                >
+                  <Printer className="w-5 h-5" />
+                </button>
+              )}
               <a
                 href={`${BACKEND_URL}/api/files/${imageFiles[lightboxIndex].id}/download`}
                 download
