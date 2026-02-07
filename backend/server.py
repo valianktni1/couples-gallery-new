@@ -125,6 +125,48 @@ class ShareResponse(BaseModel):
     share_url: str
     folder_name: str = ""
 
+# ==================== PRINT ORDER MODELS ====================
+
+class PrintProduct(BaseModel):
+    name: str
+    size: str
+    paper_type: str  # gloss, luster
+    price: float = 0.0
+    active: bool = True
+
+class PrintProductUpdate(BaseModel):
+    price: Optional[float] = None
+    active: Optional[bool] = None
+
+class OrderItem(BaseModel):
+    file_id: str
+    file_name: str
+    product_id: str
+    product_name: str
+    size: str
+    paper_type: str
+    quantity: int = 1
+    price: float
+
+class DeliveryAddress(BaseModel):
+    name: str
+    line1: str
+    line2: Optional[str] = ""
+    city: str
+    county: Optional[str] = ""
+    postcode: str
+    phone: str
+
+class OrderCreate(BaseModel):
+    share_token: str
+    customer_email: str
+    delivery_address: DeliveryAddress
+    items: List[OrderItem]
+    shipping: float = 2.50
+
+class OrderStatusUpdate(BaseModel):
+    status: str  # pending, paid, processing, shipped, completed, cancelled
+
 # ==================== AUTH HELPERS ====================
 
 def hash_password(password: str) -> str:
@@ -1078,6 +1120,204 @@ async def get_stats(admin = Depends(get_current_admin)):
         'file_count': file_count,
         'share_count': share_count,
         'total_size': total_size
+    }
+
+# ==================== PRINT PRODUCTS ROUTES ====================
+
+@api_router.get("/print-products")
+async def get_print_products(active_only: bool = False):
+    """Get all print products (public endpoint for gallery)"""
+    query = {'active': True} if active_only else {}
+    products = await db.print_products.find(query, {'_id': 0}).to_list(100)
+    return products
+
+@api_router.post("/print-products")
+async def create_print_product(product: PrintProduct, admin = Depends(get_current_admin)):
+    """Create a new print product"""
+    product_doc = {
+        'id': str(uuid.uuid4()),
+        'name': product.name,
+        'size': product.size,
+        'paper_type': product.paper_type,
+        'price': product.price,
+        'active': product.active,
+        'created_at': datetime.now(timezone.utc).isoformat()
+    }
+    await db.print_products.insert_one(product_doc)
+    return {k: v for k, v in product_doc.items() if k != '_id'}
+
+@api_router.put("/print-products/{product_id}")
+async def update_print_product(product_id: str, update: PrintProductUpdate, admin = Depends(get_current_admin)):
+    """Update a print product (price, active status)"""
+    update_data = {k: v for k, v in update.model_dump().items() if v is not None}
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No update data provided")
+    
+    result = await db.print_products.update_one(
+        {'id': product_id},
+        {'$set': update_data}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    return {"message": "Product updated"}
+
+@api_router.delete("/print-products/{product_id}")
+async def delete_print_product(product_id: str, admin = Depends(get_current_admin)):
+    """Delete a print product"""
+    result = await db.print_products.delete_one({'id': product_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return {"message": "Product deleted"}
+
+@api_router.post("/print-products/init")
+async def init_print_products(admin = Depends(get_current_admin)):
+    """Initialize default print products (run once)"""
+    existing = await db.print_products.count_documents({})
+    if existing > 0:
+        return {"message": "Products already initialized", "count": existing}
+    
+    default_products = [
+        # Gloss prints
+        {"name": "6x4 Gloss", "size": "6x4", "paper_type": "gloss", "price": 0, "active": True},
+        {"name": "7x5 Gloss", "size": "7x5", "paper_type": "gloss", "price": 0, "active": True},
+        {"name": "10x8 Gloss", "size": "10x8", "paper_type": "gloss", "price": 0, "active": True},
+        {"name": "12x8 Gloss", "size": "12x8", "paper_type": "gloss", "price": 0, "active": True},
+        {"name": "20x16 Gloss", "size": "20x16", "paper_type": "gloss", "price": 0, "active": True},
+        # Luster prints
+        {"name": "6x4 Luster", "size": "6x4", "paper_type": "luster", "price": 0, "active": True},
+        {"name": "7x5 Luster", "size": "7x5", "paper_type": "luster", "price": 0, "active": True},
+        {"name": "10x8 Luster", "size": "10x8", "paper_type": "luster", "price": 0, "active": True},
+        {"name": "12x8 Luster", "size": "12x8", "paper_type": "luster", "price": 0, "active": True},
+        {"name": "20x16 Luster", "size": "20x16", "paper_type": "luster", "price": 0, "active": True},
+        # Canvas
+        {"name": "12x8 Canvas", "size": "12x8", "paper_type": "canvas", "price": 0, "active": True},
+        {"name": "16x12 Canvas", "size": "16x12", "paper_type": "canvas", "price": 0, "active": True},
+        {"name": "20x16 Canvas", "size": "20x16", "paper_type": "canvas", "price": 0, "active": True},
+    ]
+    
+    for product in default_products:
+        product['id'] = str(uuid.uuid4())
+        product['created_at'] = datetime.now(timezone.utc).isoformat()
+        await db.print_products.insert_one(product)
+    
+    return {"message": "Products initialized", "count": len(default_products)}
+
+# ==================== PRINT ORDERS ROUTES ====================
+
+@api_router.post("/orders")
+async def create_order(order: OrderCreate, request: Request):
+    """Create a new print order (public endpoint)"""
+    # Verify share token exists
+    share = await db.shares.find_one({'token': order.share_token}, {'_id': 0})
+    if not share:
+        raise HTTPException(status_code=404, detail="Invalid gallery token")
+    
+    # Get folder name for reference
+    folder = await db.folders.find_one({'id': share['folder_id']}, {'_id': 0})
+    folder_name = folder['name'] if folder else 'Unknown'
+    
+    # Calculate total
+    subtotal = sum(item.price * item.quantity for item in order.items)
+    total = subtotal + order.shipping
+    
+    # Create order document
+    order_doc = {
+        'id': str(uuid.uuid4()),
+        'order_number': f"WBM-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:6].upper()}",
+        'share_token': order.share_token,
+        'gallery_name': folder_name,
+        'customer_email': order.customer_email,
+        'delivery_address': order.delivery_address.model_dump(),
+        'items': [item.model_dump() for item in order.items],
+        'subtotal': subtotal,
+        'shipping': order.shipping,
+        'total': total,
+        'status': 'pending',  # pending, paid, processing, shipped, completed, cancelled
+        'payment_id': None,
+        'created_at': datetime.now(timezone.utc).isoformat(),
+        'updated_at': datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.orders.insert_one(order_doc)
+    
+    # Log activity
+    ip = request.headers.get('X-Forwarded-For', request.client.host if request.client else 'unknown')
+    await log_activity('order_created', share_token=order.share_token, folder_name=folder_name, 
+                      details={'order_id': order_doc['id'], 'total': total, 'items': len(order.items)}, ip_address=ip)
+    
+    return {
+        'order_id': order_doc['id'],
+        'order_number': order_doc['order_number'],
+        'total': total
+    }
+
+@api_router.get("/orders")
+async def get_orders(admin = Depends(get_current_admin), status: Optional[str] = None, limit: int = 50, skip: int = 0):
+    """Get all orders (admin only)"""
+    query = {'status': status} if status else {}
+    orders = await db.orders.find(query, {'_id': 0}).sort('created_at', -1).skip(skip).limit(limit).to_list(limit)
+    total = await db.orders.count_documents(query)
+    return {"orders": orders, "total": total}
+
+@api_router.get("/orders/{order_id}")
+async def get_order(order_id: str, admin = Depends(get_current_admin)):
+    """Get a specific order with full details (admin only)"""
+    order = await db.orders.find_one({'id': order_id}, {'_id': 0})
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    # Get file thumbnails for each item
+    for item in order.get('items', []):
+        file_doc = await db.files.find_one({'id': item['file_id']}, {'_id': 0})
+        if file_doc:
+            item['thumbnail_url'] = f"/api/thumbnails/{item['file_id']}.jpg"
+            item['original_filename'] = file_doc.get('name', item['file_name'])
+    
+    return order
+
+@api_router.put("/orders/{order_id}/status")
+async def update_order_status(order_id: str, update: OrderStatusUpdate, admin = Depends(get_current_admin)):
+    """Update order status (admin only)"""
+    valid_statuses = ['pending', 'paid', 'processing', 'shipped', 'completed', 'cancelled']
+    if update.status not in valid_statuses:
+        raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_statuses}")
+    
+    result = await db.orders.update_one(
+        {'id': order_id},
+        {'$set': {'status': update.status, 'updated_at': datetime.now(timezone.utc).isoformat()}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    return {"message": f"Order status updated to {update.status}"}
+
+@api_router.get("/orders/stats/summary")
+async def get_order_stats(admin = Depends(get_current_admin)):
+    """Get order statistics (admin only)"""
+    total_orders = await db.orders.count_documents({})
+    pending_orders = await db.orders.count_documents({'status': 'pending'})
+    paid_orders = await db.orders.count_documents({'status': 'paid'})
+    processing_orders = await db.orders.count_documents({'status': 'processing'})
+    shipped_orders = await db.orders.count_documents({'status': 'shipped'})
+    completed_orders = await db.orders.count_documents({'status': 'completed'})
+    
+    # Calculate total revenue from completed/shipped orders
+    pipeline = [
+        {'$match': {'status': {'$in': ['paid', 'processing', 'shipped', 'completed']}}},
+        {'$group': {'_id': None, 'total': {'$sum': '$total'}}}
+    ]
+    result = await db.orders.aggregate(pipeline).to_list(1)
+    total_revenue = result[0]['total'] if result else 0
+    
+    return {
+        'total_orders': total_orders,
+        'pending': pending_orders,
+        'paid': paid_orders,
+        'processing': processing_orders,
+        'shipped': shipped_orders,
+        'completed': completed_orders,
+        'total_revenue': total_revenue
     }
 
 # ==================== ROOT ROUTE ====================

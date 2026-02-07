@@ -3,7 +3,8 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   FolderOpen, Share2, LayoutDashboard, LogOut,
-  ChevronRight, Plus, Upload, Settings, Users, Activity
+  ChevronRight, Plus, Upload, Settings, Users, Activity,
+  ShoppingBag, Tag
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
@@ -13,6 +14,8 @@ import DashboardHome from '@/components/admin/DashboardHome';
 import FolderManager from '@/components/admin/FolderManager';
 import ShareManager from '@/components/admin/ShareManager';
 import { ActivityLogs } from '@/components/admin/ActivityLogs';
+import { OrdersManager } from '@/components/admin/OrdersManager';
+import { ProductsManager } from '@/components/admin/ProductsManager';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -52,6 +55,8 @@ export default function AdminDashboard() {
     { path: '/admin', icon: LayoutDashboard, label: 'Dashboard', exact: true },
     { path: '/admin/folders', icon: FolderOpen, label: 'Galleries' },
     { path: '/admin/shares', icon: Share2, label: 'Share Links' },
+    { path: '/admin/orders', icon: ShoppingBag, label: 'Print Orders' },
+    { path: '/admin/products', icon: Tag, label: 'Products' },
     { path: '/admin/activity', icon: Activity, label: 'Activity Logs' },
   ];
 
@@ -120,6 +125,8 @@ export default function AdminDashboard() {
           <Route index element={<DashboardHome stats={stats} onRefresh={fetchStats} />} />
           <Route path="folders/*" element={<FolderManager onStatsChange={fetchStats} />} />
           <Route path="shares" element={<ShareManager />} />
+          <Route path="orders" element={<OrdersManager />} />
+          <Route path="products" element={<ProductsManager />} />
           <Route path="activity" element={<ActivityLogs />} />
         </Routes>
       </main>
