@@ -4,8 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
   FolderOpen, ChevronRight, Download, X, Heart, Check, Upload,
-  Play, Image as ImageIcon, Film, ChevronLeft, ChevronRight as ChevronRightIcon,
-  CheckSquare, Square, Save, ShoppingCart, Printer
+  Play, Pause, Image as ImageIcon, Film, ChevronLeft, ChevronRight as ChevronRightIcon,
+  CheckSquare, Square, Save, ShoppingCart, Printer, Maximize2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PrintOrderCart, PrintProductSelector } from '@/components/PrintOrderCart';
@@ -13,6 +13,18 @@ import { PrintOrderCart, PrintProductSelector } from '@/components/PrintOrderCar
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_6e5757e7-0b45-46c5-8f03-c1858510b49f/artifacts/fq31etoy_cropped-new-logo-2022-black-with-bevel-1.png";
+
+// Extract couple names from folder name (e.g., "Lisa & Tara 21.01.26" → "Lisa & Tara")
+const extractCoupleNames = (folderName) => {
+  if (!folderName) return null;
+  // Remove date patterns like "21.01.26", "210126", "21-01-26", "21/01/26"
+  const withoutDate = folderName
+    .replace(/\s*\d{2}[\.\-\/]\d{2}[\.\-\/]\d{2,4}\s*$/, '') // DD.MM.YY or DD.MM.YYYY
+    .replace(/\s*\d{6}\s*$/, '') // DDMMYY
+    .replace(/\s*\d{8}\s*$/, '') // DDMMYYYY
+    .trim();
+  return withoutDate || folderName;
+};
 
 export default function GalleryPage() {
   const { token } = useParams();
@@ -26,6 +38,10 @@ export default function GalleryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lightboxIndex, setLightboxIndex] = useState(null);
+  
+  // Slideshow state
+  const [slideshowPlaying, setSlideshowPlaying] = useState(false);
+  const slideshowInterval = useRef(null);
   
   // Selection state
   const [selectionMode, setSelectionMode] = useState(false);
