@@ -996,6 +996,23 @@ export default function GalleryPage() {
           onClose={() => setShowProductSelector(null)}
         />
       )}
+
+      {/* Back to Top Button */}
+      <AnimatePresence>
+        {showBackToTop && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            onClick={scrollToTop}
+            className="fixed bottom-6 right-6 bg-[#ad946d] hover:bg-[#9a8460] text-white p-4 rounded-full shadow-lg z-50 transition-colors"
+            data-testid="back-to-top"
+            title="Back to top"
+          >
+            <ChevronUp className="w-6 h-6" />
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
