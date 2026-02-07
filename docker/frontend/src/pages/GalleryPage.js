@@ -625,10 +625,9 @@ export default function GalleryPage() {
                       </Button>
                     )}
                     <Button
-                      variant="outline"
                       size="sm"
                       onClick={downloadAllFiles}
-                      className="border-gray-300 text-gray-700 hover:bg-gray-100"
+                      className="bg-[#ad946d] hover:bg-[#9a8460] text-white shadow-md"
                       data-testid="download-all-btn"
                     >
                       <Download className="w-4 h-4 mr-1" />
