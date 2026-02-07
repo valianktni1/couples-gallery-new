@@ -56,11 +56,25 @@ export default function GalleryPage() {
   const [showProductSelector, setShowProductSelector] = useState(null);
   const [printProducts, setPrintProducts] = useState([]);
   const [cartCount, setCartCount] = useState(0);
+  
+  // Back to top button
+  const [showBackToTop, setShowBackToTop] = useState(false);
 
   useEffect(() => {
     fetchGallery();
     fetchPrintProducts();
+    
+    // Show back to top button when scrolled down
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 500);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, [token]);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   useEffect(() => {
     if (gallery) {
