@@ -400,6 +400,22 @@ export default function GalleryPage() {
           >
             Your special memories, beautifully captured
           </motion.p>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="text-[#ad946d] text-sm mt-3 font-medium"
+          >
+            ✨ Love a photo? Order professional prints directly from your gallery!
+          </motion.p>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="text-gray-400 text-xs mt-1"
+          >
+            Coming soon: Beautifully crafted wedding albums
+          </motion.p>
         </div>
       </div>
 

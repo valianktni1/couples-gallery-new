@@ -1190,9 +1190,9 @@ async def init_print_products(admin = Depends(get_current_admin)):
     if existing > 0:
         return {"message": "Products already initialized", "count": existing}
     
-    sizes = ["6x4", "7x5", "10x8", "12x8", "20x16"]
+    sizes = ["6x4", "7x5", "10x8", "12x8", "20x16", "30x20"]
     paper_types = ["matte", "lustre", "silk", "gloss"]
-    canvas_sizes = ["12x8", "16x12", "20x16"]
+    canvas_sizes = ["12x8", "16x12", "20x16", "30x20"]
     
     default_products = []
     
