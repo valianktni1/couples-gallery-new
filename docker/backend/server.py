@@ -125,6 +125,48 @@ class ShareResponse(BaseModel):
     share_url: str
     folder_name: str = ""
 
+# ==================== PRINT ORDER MODELS ====================
+
+class PrintProduct(BaseModel):
+    name: str
+    size: str
+    paper_type: str  # gloss, luster
+    price: float = 0.0
+    active: bool = True
+
+class PrintProductUpdate(BaseModel):
+    price: Optional[float] = None
+    active: Optional[bool] = None
+
+class OrderItem(BaseModel):
+    file_id: str
+    file_name: str
+    product_id: str
+    product_name: str
+    size: str
+    paper_type: str
+    quantity: int = 1
+    price: float
+
+class DeliveryAddress(BaseModel):
+    name: str
+    line1: str
+    line2: Optional[str] = ""
+    city: str
+    county: Optional[str] = ""
+    postcode: str
+    phone: str
+
+class OrderCreate(BaseModel):
+    share_token: str
+    customer_email: str
+    delivery_address: DeliveryAddress
+    items: List[OrderItem]
+    shipping: float = 2.50
+
+class OrderStatusUpdate(BaseModel):
+    status: str  # pending, paid, processing, shipped, completed, cancelled
+
 # ==================== AUTH HELPERS ====================
 
 def hash_password(password: str) -> str:
