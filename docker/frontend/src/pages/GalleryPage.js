@@ -922,7 +922,7 @@ export default function GalleryPage() {
                 </a>
               )}
               <button
-                onClick={closeLightbox}
+                onClick={(e) => { e.stopPropagation(); closeLightbox(); }}
                 className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-sm transition-colors"
                 data-testid="lightbox-close"
               >
@@ -932,7 +932,7 @@ export default function GalleryPage() {
 
             {/* Slideshow indicator */}
             {slideshowPlaying && (
-              <div className="absolute top-4 left-4 bg-[#ad946d] text-white px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2">
+              <div className="absolute top-4 left-4 bg-[#ad946d] text-white px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                 <Play className="w-4 h-4" />
                 Slideshow Playing
               </div>
