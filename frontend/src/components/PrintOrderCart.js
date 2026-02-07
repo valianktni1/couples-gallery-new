@@ -469,8 +469,10 @@ export function PrintProductSelector({ file, products, onSelect, onClose }) {
   }, {});
 
   const paperLabels = {
+    matte: 'Matte',
+    lustre: 'Lustre',
+    silk: 'Silk',
     gloss: 'Gloss',
-    luster: 'Luster',
     canvas: 'Canvas'
   };
 

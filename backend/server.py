@@ -1190,24 +1190,32 @@ async def init_print_products(admin = Depends(get_current_admin)):
     if existing > 0:
         return {"message": "Products already initialized", "count": existing}
     
-    default_products = [
-        # Gloss prints
-        {"name": "6x4 Gloss", "size": "6x4", "paper_type": "gloss", "price": 0, "active": True},
-        {"name": "7x5 Gloss", "size": "7x5", "paper_type": "gloss", "price": 0, "active": True},
-        {"name": "10x8 Gloss", "size": "10x8", "paper_type": "gloss", "price": 0, "active": True},
-        {"name": "12x8 Gloss", "size": "12x8", "paper_type": "gloss", "price": 0, "active": True},
-        {"name": "20x16 Gloss", "size": "20x16", "paper_type": "gloss", "price": 0, "active": True},
-        # Luster prints
-        {"name": "6x4 Luster", "size": "6x4", "paper_type": "luster", "price": 0, "active": True},
-        {"name": "7x5 Luster", "size": "7x5", "paper_type": "luster", "price": 0, "active": True},
-        {"name": "10x8 Luster", "size": "10x8", "paper_type": "luster", "price": 0, "active": True},
-        {"name": "12x8 Luster", "size": "12x8", "paper_type": "luster", "price": 0, "active": True},
-        {"name": "20x16 Luster", "size": "20x16", "paper_type": "luster", "price": 0, "active": True},
-        # Canvas
-        {"name": "12x8 Canvas", "size": "12x8", "paper_type": "canvas", "price": 0, "active": True},
-        {"name": "16x12 Canvas", "size": "16x12", "paper_type": "canvas", "price": 0, "active": True},
-        {"name": "20x16 Canvas", "size": "20x16", "paper_type": "canvas", "price": 0, "active": True},
-    ]
+    sizes = ["6x4", "7x5", "10x8", "12x8", "20x16"]
+    paper_types = ["matte", "lustre", "silk", "gloss"]
+    canvas_sizes = ["12x8", "16x12", "20x16"]
+    
+    default_products = []
+    
+    # Print papers
+    for paper in paper_types:
+        for size in sizes:
+            default_products.append({
+                "name": f"{size} {paper.capitalize()}",
+                "size": size,
+                "paper_type": paper,
+                "price": 0,
+                "active": True
+            })
+    
+    # Canvas
+    for size in canvas_sizes:
+        default_products.append({
+            "name": f"{size} Canvas",
+            "size": size,
+            "paper_type": "canvas",
+            "price": 0,
+            "active": True
+        })
     
     for product in default_products:
         product['id'] = str(uuid.uuid4())

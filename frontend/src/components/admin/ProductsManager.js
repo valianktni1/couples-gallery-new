@@ -159,8 +159,10 @@ export function ProductsManager() {
   }, {});
 
   const paperTypeLabels = {
+    matte: 'Matte Prints',
+    lustre: 'Lustre Prints',
+    silk: 'Silk Prints',
     gloss: 'Gloss Prints',
-    luster: 'Luster Prints',
     canvas: 'Canvas',
     other: 'Other'
   };
@@ -335,8 +337,10 @@ export function ProductsManager() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#252525] border-[#333]">
+                  <SelectItem value="matte">Matte</SelectItem>
+                  <SelectItem value="lustre">Lustre</SelectItem>
+                  <SelectItem value="silk">Silk</SelectItem>
                   <SelectItem value="gloss">Gloss</SelectItem>
-                  <SelectItem value="luster">Luster</SelectItem>
                   <SelectItem value="canvas">Canvas</SelectItem>
                 </SelectContent>
               </Select>
