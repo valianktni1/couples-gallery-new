@@ -320,11 +320,18 @@ export default function GalleryPage() {
       setLightboxIndex(index);
     }
   };
-  const closeLightbox = () => setLightboxIndex(null);
+  
+  const closeLightbox = () => {
+    stopSlideshow();
+    setLightboxIndex(null);
+  };
   
   const nextImage = () => {
     if (lightboxIndex < imageFiles.length - 1) {
       setLightboxIndex(lightboxIndex + 1);
+    } else if (slideshowPlaying) {
+      // Loop back to start in slideshow mode
+      setLightboxIndex(0);
     }
   };
   
@@ -333,6 +340,45 @@ export default function GalleryPage() {
       setLightboxIndex(lightboxIndex - 1);
     }
   };
+
+  // Slideshow functions
+  const startSlideshow = () => {
+    setSlideshowPlaying(true);
+    slideshowInterval.current = setInterval(() => {
+      setLightboxIndex(prev => {
+        if (prev < imageFiles.length - 1) {
+          return prev + 1;
+        } else {
+          return 0; // Loop back to start
+        }
+      });
+    }, 4000); // 4 seconds per image
+  };
+
+  const stopSlideshow = () => {
+    setSlideshowPlaying(false);
+    if (slideshowInterval.current) {
+      clearInterval(slideshowInterval.current);
+      slideshowInterval.current = null;
+    }
+  };
+
+  const toggleSlideshow = () => {
+    if (slideshowPlaying) {
+      stopSlideshow();
+    } else {
+      startSlideshow();
+    }
+  };
+
+  // Cleanup slideshow on unmount
+  useEffect(() => {
+    return () => {
+      if (slideshowInterval.current) {
+        clearInterval(slideshowInterval.current);
+      }
+    };
+  }, []);
 
   // Check if user has edit or full permission
   const canEdit = gallery?.permission === 'edit' || gallery?.permission === 'full';
