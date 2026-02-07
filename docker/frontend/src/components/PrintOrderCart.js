@@ -59,11 +59,9 @@ export function PrintOrderCart({ shareToken, isOpen, onClose }) {
   }, [isOpen, shareToken]);
 
   useEffect(() => {
-    // Save cart to localStorage (but only if cart has items or we're clearing it intentionally)
-    if (cart.length > 0 || step === 'confirm') {
-      localStorage.setItem(`print_cart_${shareToken}`, JSON.stringify(cart));
-    }
-  }, [cart, shareToken, step]);
+    // Save cart to localStorage whenever it changes
+    localStorage.setItem(`print_cart_${shareToken}`, JSON.stringify(cart));
+  }, [cart, shareToken]);
 
   const fetchProducts = async () => {
     try {
