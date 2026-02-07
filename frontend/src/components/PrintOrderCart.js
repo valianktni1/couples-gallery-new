@@ -422,14 +422,31 @@ export function PrintOrderCart({ shareToken, isOpen, onClose }) {
             </div>
             <h3 className="text-xl font-semibold">Thank You!</h3>
             <p className="text-gray-600">
-              Your order has been submitted. Mark will send you an invoice via email shortly.
+              Your order has been submitted. Please complete payment below:
             </p>
+            
+            <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+              <p className="text-2xl font-bold text-[#ad946d]">{formatPrice(total)}</p>
+              <a
+                href={`https://paypal.me/weddingsbymark/${total.toFixed(2)}GBP`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center w-full bg-[#0070ba] hover:bg-[#005ea6] text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+              >
+                Pay with PayPal
+              </a>
+              <p className="text-xs text-gray-500">
+                Click above to pay securely via PayPal
+              </p>
+            </div>
+            
             <p className="text-sm text-gray-500">
               Once payment is received, your prints will be processed and shipped to you.
             </p>
             <Button
               onClick={() => { setStep('cart'); onClose(); }}
-              className="bg-[#ad946d] hover:bg-[#9a8460] text-white"
+              variant="outline"
+              className="mt-4"
             >
               Close
             </Button>
