@@ -145,3 +145,7 @@ files/773f6e45-5338-45cc-9c43-18b0e430a173.mp4
 # Environment files
 *.env
 *.env.*
+-e 
+# Environment files
+*.env
+*.env.*
