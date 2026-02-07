@@ -56,12 +56,20 @@ export function ActivityLogs() {
 
   useEffect(() => {
     fetchLogs();
-  }, [page]);
+  }, [page, searchTerm]);
 
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API}/activity-logs?limit=${limit}&skip=${page * limit}`, { headers });
+      const params = new URLSearchParams({
+        limit: limit.toString(),
+        skip: (page * limit).toString()
+      });
+      if (searchTerm.trim()) {
+        params.append('search', searchTerm.trim());
+      }
+      
+      const res = await fetch(`${API}/activity-logs?${params}`, { headers });
       if (res.ok) {
         const data = await res.json();
         setLogs(data.logs);
