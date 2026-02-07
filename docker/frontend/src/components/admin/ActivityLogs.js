@@ -148,6 +148,18 @@ export function ActivityLogs() {
         </div>
       </div>
 
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+        <input
+          type="text"
+          placeholder="Search by folder name, share token, or file name..."
+          value={searchTerm}
+          onChange={(e) => handleSearch(e.target.value)}
+          className="w-full pl-10 pr-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-[#ad946d] focus:ring-1 focus:ring-[#ad946d]"
+        />
+      </div>
+
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4">
         {Object.entries(ACTION_LABELS).map(([action, label]) => {
