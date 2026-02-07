@@ -95,6 +95,7 @@ export function ActivityLogs() {
         setLogs([]);
         setTotal(0);
         setPage(0);
+        setSearchTerm(''); // Reset search when clearing logs
       }
     } catch (e) {
       toast.error('Failed to clear logs');
