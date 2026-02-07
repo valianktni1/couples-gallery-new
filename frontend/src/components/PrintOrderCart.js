@@ -24,6 +24,7 @@ import {
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 const SHIPPING_FEE = 2.50;
+const MIN_ORDER = 15.00;
 
 export function PrintOrderCart({ shareToken, isOpen, onClose }) {
   const [products, setProducts] = useState([]);
@@ -288,11 +289,17 @@ export function PrintOrderCart({ shareToken, isOpen, onClose }) {
                     <span>Total</span>
                     <span className="text-[#ad946d]">{formatPrice(total)}</span>
                   </div>
+                  {subtotal < MIN_ORDER && (
+                    <p className="text-red-500 text-sm mt-2">
+                      Minimum order is £{MIN_ORDER.toFixed(2)} (£{(MIN_ORDER - subtotal).toFixed(2)} more needed)
+                    </p>
+                  )}
                 </div>
 
                 <Button
                   onClick={() => setStep('details')}
-                  className="w-full bg-[#ad946d] hover:bg-[#9a8460] text-white"
+                  disabled={subtotal < MIN_ORDER}
+                  className="w-full bg-[#ad946d] hover:bg-[#9a8460] text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Continue to Checkout
                   <ChevronRight className="w-4 h-4 ml-2" />

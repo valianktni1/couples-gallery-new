@@ -1242,6 +1242,10 @@ async def create_order(order: OrderCreate, request: Request):
     subtotal = sum(item.price * item.quantity for item in order.items)
     total = subtotal + order.shipping
     
+    # Minimum order check
+    if subtotal < 15.00:
+        raise HTTPException(status_code=400, detail="Minimum order is £15 (before shipping)")
+    
     # Create order document
     order_doc = {
         'id': str(uuid.uuid4()),
