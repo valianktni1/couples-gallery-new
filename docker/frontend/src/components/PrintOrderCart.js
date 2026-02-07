@@ -487,14 +487,14 @@ export function PrintProductSelector({ file, products, onSelect, onClose }) {
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="bg-white border-gray-200 text-gray-900 max-w-md">
-        <DialogHeader>
+      <DialogContent className="bg-white border-gray-200 text-gray-900 max-w-md max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Order Print</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Image preview */}
-          <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
+        <div className="flex flex-col flex-1 overflow-hidden">
+          {/* Image preview - fixed height */}
+          <div className="flex-shrink-0 h-32 bg-gray-100 rounded-lg overflow-hidden mb-2">
             {file.thumbnail_url && (
               <img
                 src={`${BACKEND_URL}${file.thumbnail_url}`}
@@ -503,28 +503,28 @@ export function PrintProductSelector({ file, products, onSelect, onClose }) {
               />
             )}
           </div>
-          <p className="text-sm text-gray-500 truncate">{file.name}</p>
+          <p className="text-sm text-gray-500 truncate flex-shrink-0 mb-3">{file.name}</p>
 
-          {/* Product Selection */}
-          <div className="space-y-3">
+          {/* Product Selection - scrollable */}
+          <div className="flex-1 overflow-y-auto space-y-3 pr-2 min-h-0">
             {Object.entries(productsByType).map(([type, typeProducts]) => (
               <div key={type}>
-                <h4 className="text-sm font-medium text-gray-700 mb-2">
+                <h4 className="text-sm font-medium text-gray-700 mb-2 sticky top-0 bg-white py-1">
                   {paperLabels[type] || type}
                 </h4>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   {typeProducts.map((product) => (
                     <button
                       key={product.id}
                       onClick={() => setSelectedProduct(product)}
-                      className={`p-3 rounded-lg border text-left transition-colors ${
+                      className={`p-2 rounded-lg border text-left transition-colors ${
                         selectedProduct?.id === product.id
                           ? 'border-[#ad946d] bg-[#ad946d]/10'
                           : 'border-gray-200 hover:border-gray-300'
                       }`}
                     >
-                      <p className="font-medium text-sm">{product.size}</p>
-                      <p className="text-[#ad946d] font-semibold">{formatPrice(product.price)}</p>
+                      <p className="font-medium text-xs">{product.size}</p>
+                      <p className="text-[#ad946d] font-semibold text-sm">{formatPrice(product.price)}</p>
                     </button>
                   ))}
                 </div>
@@ -541,7 +541,7 @@ export function PrintProductSelector({ file, products, onSelect, onClose }) {
           <Button
             onClick={() => selectedProduct && onSelect(file, selectedProduct)}
             disabled={!selectedProduct}
-            className="w-full bg-[#ad946d] hover:bg-[#9a8460] text-white"
+            className="w-full bg-[#ad946d] hover:bg-[#9a8460] text-white flex-shrink-0 mt-3"
           >
             Add to Cart
           </Button>
