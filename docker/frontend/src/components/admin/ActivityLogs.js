@@ -49,6 +49,7 @@ export function ActivityLogs() {
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   
   const limit = 20;
   const headers = { Authorization: `Bearer ${token}` };
