@@ -4,8 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import {
   FolderOpen, ChevronRight, Download, X, Heart, Check, Upload,
-  Play, Image as ImageIcon, Film, ChevronLeft, ChevronRight as ChevronRightIcon,
-  CheckSquare, Square, Save, ShoppingCart, Printer
+  Play, Pause, Image as ImageIcon, Film, ChevronLeft, ChevronRight as ChevronRightIcon,
+  CheckSquare, Square, Save, ShoppingCart, Printer, Maximize2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PrintOrderCart, PrintProductSelector } from '@/components/PrintOrderCart';
@@ -13,6 +13,18 @@ import { PrintOrderCart, PrintProductSelector } from '@/components/PrintOrderCar
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 const LOGO_URL = "https://customer-assets.emergentagent.com/job_6e5757e7-0b45-46c5-8f03-c1858510b49f/artifacts/fq31etoy_cropped-new-logo-2022-black-with-bevel-1.png";
+
+// Extract couple names from folder name (e.g., "Lisa & Tara 21.01.26" → "Lisa & Tara")
+const extractCoupleNames = (folderName) => {
+  if (!folderName) return null;
+  // Remove date patterns like "21.01.26", "210126", "21-01-26", "21/01/26"
+  const withoutDate = folderName
+    .replace(/\s*\d{2}[\.\-\/]\d{2}[\.\-\/]\d{2,4}\s*$/, '') // DD.MM.YY or DD.MM.YYYY
+    .replace(/\s*\d{6}\s*$/, '') // DDMMYY
+    .replace(/\s*\d{8}\s*$/, '') // DDMMYYYY
+    .trim();
+  return withoutDate || folderName;
+};
 
 export default function GalleryPage() {
   const { token } = useParams();
@@ -26,6 +38,10 @@ export default function GalleryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lightboxIndex, setLightboxIndex] = useState(null);
+  
+  // Slideshow state
+  const [slideshowPlaying, setSlideshowPlaying] = useState(false);
+  const slideshowInterval = useRef(null);
   
   // Selection state
   const [selectionMode, setSelectionMode] = useState(false);
@@ -304,11 +320,18 @@ export default function GalleryPage() {
       setLightboxIndex(index);
     }
   };
-  const closeLightbox = () => setLightboxIndex(null);
+  
+  const closeLightbox = () => {
+    stopSlideshow();
+    setLightboxIndex(null);
+  };
   
   const nextImage = () => {
     if (lightboxIndex < imageFiles.length - 1) {
       setLightboxIndex(lightboxIndex + 1);
+    } else if (slideshowPlaying) {
+      // Loop back to start in slideshow mode
+      setLightboxIndex(0);
     }
   };
   
@@ -317,6 +340,45 @@ export default function GalleryPage() {
       setLightboxIndex(lightboxIndex - 1);
     }
   };
+
+  // Slideshow functions
+  const startSlideshow = () => {
+    setSlideshowPlaying(true);
+    slideshowInterval.current = setInterval(() => {
+      setLightboxIndex(prev => {
+        if (prev < imageFiles.length - 1) {
+          return prev + 1;
+        } else {
+          return 0; // Loop back to start
+        }
+      });
+    }, 4000); // 4 seconds per image
+  };
+
+  const stopSlideshow = () => {
+    setSlideshowPlaying(false);
+    if (slideshowInterval.current) {
+      clearInterval(slideshowInterval.current);
+      slideshowInterval.current = null;
+    }
+  };
+
+  const toggleSlideshow = () => {
+    if (slideshowPlaying) {
+      stopSlideshow();
+    } else {
+      startSlideshow();
+    }
+  };
+
+  // Cleanup slideshow on unmount
+  useEffect(() => {
+    return () => {
+      if (slideshowInterval.current) {
+        clearInterval(slideshowInterval.current);
+      }
+    };
+  }, []);
 
   // Check if user has edit or full permission
   const canEdit = gallery?.permission === 'edit' || gallery?.permission === 'full';
@@ -385,12 +447,20 @@ export default function GalleryPage() {
       {/* Hero */}
       <div className="bg-gradient-to-b from-[#ad946d]/10 to-transparent py-16 md:py-24">
         <div className="max-w-7xl mx-auto px-4 md:px-8 text-center">
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-[#ad946d] text-lg mb-2 font-medium"
+          >
+            Welcome
+          </motion.p>
           <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
             className="font-serif text-4xl md:text-5xl lg:text-6xl text-gray-900 mb-4 italic"
           >
-            {gallery?.folder_name}
+            {extractCoupleNames(gallery?.folder_name)}
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
@@ -528,6 +598,18 @@ export default function GalleryPage() {
                       <CheckSquare className="w-4 h-4 mr-1" />
                       Select
                     </Button>
+                    {imageFiles.length > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { setLightboxIndex(0); }}
+                        className="border-[#ad946d] text-[#ad946d] hover:bg-[#ad946d]/10"
+                        data-testid="slideshow-btn"
+                      >
+                        <Play className="w-4 h-4 mr-1" />
+                        Slideshow
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
@@ -809,7 +891,16 @@ export default function GalleryPage() {
 
             {/* Controls */}
             <div className="absolute top-4 right-4 flex items-center gap-2">
-              {printProducts.length > 0 && (
+              {/* Slideshow Play/Pause */}
+              <button
+                onClick={toggleSlideshow}
+                className={`${slideshowPlaying ? 'bg-[#ad946d]' : 'bg-white/10'} hover:bg-[#ad946d]/80 text-white p-3 rounded-full backdrop-blur-sm transition-colors`}
+                data-testid="lightbox-slideshow"
+                title={slideshowPlaying ? "Pause Slideshow" : "Play Slideshow"}
+              >
+                {slideshowPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+              </button>
+              {printProducts.length > 0 && !slideshowPlaying && (
                 <button
                   onClick={() => setShowProductSelector(imageFiles[lightboxIndex])}
                   className="bg-[#ad946d] hover:bg-[#9a8460] text-white p-3 rounded-full backdrop-blur-sm transition-colors"
@@ -819,14 +910,16 @@ export default function GalleryPage() {
                   <Printer className="w-5 h-5" />
                 </button>
               )}
-              <a
-                href={`${BACKEND_URL}/api/files/${imageFiles[lightboxIndex].id}/download`}
-                download
-                className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-sm transition-colors"
-                data-testid="lightbox-download"
-              >
-                <Download className="w-5 h-5" />
-              </a>
+              {!slideshowPlaying && (
+                <a
+                  href={`${BACKEND_URL}/api/files/${imageFiles[lightboxIndex].id}/download`}
+                  download
+                  className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-sm transition-colors"
+                  data-testid="lightbox-download"
+                >
+                  <Download className="w-5 h-5" />
+                </a>
+              )}
               <button
                 onClick={closeLightbox}
                 className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-sm transition-colors"
@@ -836,8 +929,16 @@ export default function GalleryPage() {
               </button>
             </div>
 
-            {/* Navigation */}
-            {lightboxIndex > 0 && (
+            {/* Slideshow indicator */}
+            {slideshowPlaying && (
+              <div className="absolute top-4 left-4 bg-[#ad946d] text-white px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2">
+                <Play className="w-4 h-4" />
+                Slideshow Playing
+              </div>
+            )}
+
+            {/* Navigation - always show in slideshow for manual override */}
+            {(lightboxIndex > 0 || slideshowPlaying) && (
               <button
                 onClick={(e) => { e.stopPropagation(); prevImage(); }}
                 className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-sm transition-colors"
@@ -846,7 +947,7 @@ export default function GalleryPage() {
                 <ChevronLeft className="w-6 h-6" />
               </button>
             )}
-            {lightboxIndex < imageFiles.length - 1 && (
+            {(lightboxIndex < imageFiles.length - 1 || slideshowPlaying) && (
               <button
                 onClick={(e) => { e.stopPropagation(); nextImage(); }}
                 className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-sm transition-colors"
