@@ -212,16 +212,17 @@ async def generate_thumbnail(file_path: Path, file_id: str) -> Optional[str]:
         logger.error(f"Thumbnail generation failed: {e}")
         return None
 
-async def generate_preview(file_path: Path, file_id: str, max_size: int = 1500) -> Optional[str]:
+async def generate_preview(file_path: Path, file_id: str, max_size: int = 400) -> Optional[str]:
     try:
         with Image.open(file_path) as img:
             ratio = min(max_size / img.width, max_size / img.height)
-            new_size = (int(img.width * ratio), int(img.height * ratio))
-            img = img.resize(new_size, Image.Resampling.LANCZOS)
+            if ratio < 1:
+                new_size = (int(img.width * ratio), int(img.height * ratio))
+                img = img.resize(new_size, Image.Resampling.LANCZOS)
             if img.mode in ('RGBA', 'P'):
                 img = img.convert('RGB')
             preview_path = PREVIEWS_DIR / f"{file_id}.jpg"
-            img.save(preview_path, 'JPEG', quality=90)
+            img.save(preview_path, 'JPEG', quality=75)
             return str(preview_path)
     except Exception as e:
         logger.error(f"Preview generation failed: {e}")
