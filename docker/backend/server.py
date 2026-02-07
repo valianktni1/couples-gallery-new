@@ -984,10 +984,23 @@ async def download_gallery_zip(token: str, folder_id: Optional[str] = None, requ
 # ==================== ACTIVITY LOGS ====================
 
 @api_router.get("/activity-logs")
-async def get_activity_logs(admin = Depends(get_current_admin), limit: int = 100, skip: int = 0):
-    """Get activity logs for admin"""
-    logs = await db.activity_logs.find({}, {'_id': 0}).sort('created_at', -1).skip(skip).limit(limit).to_list(limit)
-    total = await db.activity_logs.count_documents({})
+async def get_activity_logs(admin = Depends(get_current_admin), limit: int = 100, skip: int = 0, search: str = None):
+    """Get activity logs for admin with optional search"""
+    # Auto-cleanup: Delete logs older than 400 days
+    cutoff_date = (datetime.now(timezone.utc) - timedelta(days=400)).isoformat()
+    await db.activity_logs.delete_many({'created_at': {'$lt': cutoff_date}})
+    
+    # Build query with optional search
+    query = {}
+    if search:
+        query['$or'] = [
+            {'folder_name': {'$regex': search, '$options': 'i'}},
+            {'share_token': {'$regex': search, '$options': 'i'}},
+            {'file_name': {'$regex': search, '$options': 'i'}}
+        ]
+    
+    logs = await db.activity_logs.find(query, {'_id': 0}).sort('created_at', -1).skip(skip).limit(limit).to_list(limit)
+    total = await db.activity_logs.count_documents(query)
     return {'logs': logs, 'total': total}
 
 @api_router.delete("/activity-logs")
