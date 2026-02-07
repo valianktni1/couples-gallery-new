@@ -5,9 +5,10 @@ import { toast } from 'sonner';
 import {
   FolderOpen, ChevronRight, Download, X, Heart, Check, Upload,
   Play, Image as ImageIcon, Film, ChevronLeft, ChevronRight as ChevronRightIcon,
-  CheckSquare, Square, Save
+  CheckSquare, Square, Save, ShoppingCart, Printer
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { PrintOrderCart, PrintProductSelector } from '@/components/PrintOrderCart';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -33,9 +34,16 @@ export default function GalleryPage() {
   const [savingFavourites, setSavingFavourites] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
+  
+  // Print ordering state
+  const [showCart, setShowCart] = useState(false);
+  const [showProductSelector, setShowProductSelector] = useState(null);
+  const [printProducts, setPrintProducts] = useState([]);
+  const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
     fetchGallery();
+    fetchPrintProducts();
   }, [token]);
 
   useEffect(() => {
