@@ -24,6 +24,7 @@ import {
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 const SHIPPING_FEE = 2.50;
+const MIN_ORDER = 15.00;
 
 export function PrintOrderCart({ shareToken, isOpen, onClose }) {
   const [products, setProducts] = useState([]);
