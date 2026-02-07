@@ -898,7 +898,7 @@ export default function GalleryPage() {
           >
             <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
               <img
-                src={`${BACKEND_URL}${imageFiles[lightboxIndex].preview_url}`}
+                src={`${BACKEND_URL}/api/files/${imageFiles[lightboxIndex].id}/download`}
                 alt={imageFiles[lightboxIndex].name}
               />
             </div>
