@@ -55,6 +55,8 @@ export default function AdminDashboard() {
     { path: '/admin', icon: LayoutDashboard, label: 'Dashboard', exact: true },
     { path: '/admin/folders', icon: FolderOpen, label: 'Galleries' },
     { path: '/admin/shares', icon: Share2, label: 'Share Links' },
+    { path: '/admin/orders', icon: ShoppingBag, label: 'Print Orders' },
+    { path: '/admin/products', icon: Tag, label: 'Products' },
     { path: '/admin/activity', icon: Activity, label: 'Activity Logs' },
   ];
 
