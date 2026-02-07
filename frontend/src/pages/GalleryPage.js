@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import {
   FolderOpen, ChevronRight, Download, X, Heart, Check, Upload,
   Play, Pause, Image as ImageIcon, Film, ChevronLeft, ChevronRight as ChevronRightIcon,
-  CheckSquare, Square, Save, ShoppingCart, Printer, Maximize2
+  CheckSquare, Square, Save, ShoppingCart, Printer, Maximize2, ChevronUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PrintOrderCart, PrintProductSelector } from '@/components/PrintOrderCart';
@@ -56,11 +56,25 @@ export default function GalleryPage() {
   const [showProductSelector, setShowProductSelector] = useState(null);
   const [printProducts, setPrintProducts] = useState([]);
   const [cartCount, setCartCount] = useState(0);
+  
+  // Back to top button
+  const [showBackToTop, setShowBackToTop] = useState(false);
 
   useEffect(() => {
     fetchGallery();
     fetchPrintProducts();
+    
+    // Show back to top button when scrolled down
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 500);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, [token]);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   useEffect(() => {
     if (gallery) {
@@ -982,6 +996,23 @@ export default function GalleryPage() {
           onClose={() => setShowProductSelector(null)}
         />
       )}
+
+      {/* Back to Top Button */}
+      <AnimatePresence>
+        {showBackToTop && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            onClick={scrollToTop}
+            className="fixed bottom-6 right-6 bg-[#ad946d] hover:bg-[#9a8460] text-white p-4 rounded-full shadow-lg z-50 transition-colors"
+            data-testid="back-to-top"
+            title="Back to top"
+          >
+            <ChevronUp className="w-6 h-6" />
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
