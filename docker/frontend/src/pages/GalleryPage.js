@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import {
   FolderOpen, ChevronRight, Download, X, Heart, Check, Upload,
   Play, Pause, Image as ImageIcon, Film, ChevronLeft, ChevronRight as ChevronRightIcon,
-  CheckSquare, Square, Save, ShoppingCart, Printer, Maximize2
+  CheckSquare, Square, Save, ShoppingCart, Printer, Maximize2, ChevronUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PrintOrderCart, PrintProductSelector } from '@/components/PrintOrderCart';
