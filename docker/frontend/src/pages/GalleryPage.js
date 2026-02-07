@@ -598,6 +598,18 @@ export default function GalleryPage() {
                       <CheckSquare className="w-4 h-4 mr-1" />
                       Select
                     </Button>
+                    {imageFiles.length > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { setLightboxIndex(0); }}
+                        className="border-[#ad946d] text-[#ad946d] hover:bg-[#ad946d]/10"
+                        data-testid="slideshow-btn"
+                      >
+                        <Play className="w-4 h-4 mr-1" />
+                        Slideshow
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
