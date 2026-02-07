@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { 
   Activity, Eye, Download, Upload, Archive, Trash2, RefreshCw,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, Search
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
