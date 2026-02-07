@@ -837,6 +837,23 @@ export default function GalleryPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Print Order Cart Modal */}
+      <PrintOrderCart
+        shareToken={token}
+        isOpen={showCart}
+        onClose={() => { setShowCart(false); updateCartCount(); }}
+      />
+
+      {/* Product Selector Modal */}
+      {showProductSelector && (
+        <PrintProductSelector
+          file={showProductSelector}
+          products={printProducts}
+          onSelect={handleAddToCart}
+          onClose={() => setShowProductSelector(null)}
+        />
+      )}
     </div>
   );
 }
