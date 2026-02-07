@@ -43,21 +43,27 @@ export function PrintOrderCart({ shareToken, isOpen, onClose }) {
     phone: ''
   });
 
+  // Load cart from localStorage when modal opens
   useEffect(() => {
-    fetchProducts();
-    // Load cart from localStorage
-    const saved = localStorage.getItem(`print_cart_${shareToken}`);
-    if (saved) {
-      try {
-        setCart(JSON.parse(saved));
-      } catch (e) {}
+    if (isOpen) {
+      const saved = localStorage.getItem(`print_cart_${shareToken}`);
+      if (saved) {
+        try {
+          setCart(JSON.parse(saved));
+        } catch (e) {
+          setCart([]);
+        }
+      }
+      fetchProducts();
     }
-  }, [shareToken]);
+  }, [isOpen, shareToken]);
 
   useEffect(() => {
-    // Save cart to localStorage
-    localStorage.setItem(`print_cart_${shareToken}`, JSON.stringify(cart));
-  }, [cart, shareToken]);
+    // Save cart to localStorage (but only if cart has items or we're clearing it intentionally)
+    if (cart.length > 0 || step === 'confirm') {
+      localStorage.setItem(`print_cart_${shareToken}`, JSON.stringify(cart));
+    }
+  }, [cart, shareToken, step]);
 
   const fetchProducts = async () => {
     try {
