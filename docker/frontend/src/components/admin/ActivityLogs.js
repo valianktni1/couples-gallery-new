@@ -86,6 +86,8 @@ export function ActivityLogs() {
     setSearchTerm(value);
     setPage(0); // Reset to first page when searching
   };
+
+  const clearLogs = async () => {
     try {
       const res = await fetch(`${API}/activity-logs`, { method: 'DELETE', headers });
       if (res.ok) {
